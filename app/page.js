@@ -9,19 +9,18 @@ export default function HomePage() {
   const supabase = createClient()
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      const { data } = await supabase.from('restaurants').select('*').limit(20)
-      if (data) setRestaurants(data)
+  async function load() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      window.location.href = '/login'
+      return
     }
-    load()
-  }, [])
-
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
+    setUser(user)
+    const { data } = await supabase.from('restaurants').select('*').limit(20)
+    if (data) setRestaurants(data)
   }
+  load()
+}, [])
 
   return (
     <main style={styles.container}>
