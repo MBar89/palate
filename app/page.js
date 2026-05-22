@@ -8,7 +8,7 @@ export default function HomePage() {
   const [user, setUser] = useState(null)
   const supabase = createClient()
 
-  useEffect(() => {
+ useEffect(() => {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -16,7 +16,10 @@ export default function HomePage() {
       return
     }
     setUser(user)
-    const { data } = await supabase.from('restaurants').select('*').limit(20)
+    const { data, error } = await supabase.from('restaurants').select('*').limit(20)
+    if (error) {
+      console.error('Error fetching restaurants:', error)
+    }
     if (data) setRestaurants(data)
   }
   load()
