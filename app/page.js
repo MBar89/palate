@@ -8,22 +8,25 @@ export default function HomePage() {
   const [user, setUser] = useState(null)
   const supabase = createClient()
 
- useEffect(() => {
-  async function load() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      window.location.href = '/login'
-      return
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      setUser(user)
+      const { data, error } = await supabase.from('restaurants').select('*').limit(20)
+      if (error) console.error('Error fetching restaurants:', error)
+      if (data) setRestaurants(data)
     }
-    setUser(user)
-    const { data, error } = await supabase.from('restaurants').select('*').limit(20)
-    if (error) {
-      console.error('Error fetching restaurants:', error)
-    }
-    if (data) setRestaurants(data)
+    load()
+  }, [])
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
   }
-  load()
-}, [])
 
   return (
     <main style={styles.container}>
