@@ -1,4 +1,4 @@
-'use client'
+content = """'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '../lib/supabase'
@@ -68,3 +68,9 @@ export default function HomePage() {
     </main>
   )
 }
+"""
+
+with open('app/page.js', 'w') as f:
+    f.write(content)
+
+print('Done')
