@@ -1,4 +1,4 @@
-content = """'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase'
@@ -145,9 +145,3 @@ export default function ProfilePage() {
     </main>
   )
 }
-"""
-
-with open('app/profile/page.js', 'w') as f:
-    f.write(content)
-
-print('Done')
