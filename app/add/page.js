@@ -1,4 +1,4 @@
-content = """'use client'
+'use client'
 
 import { useState } from 'react'
 import { createClient } from '../../lib/supabase'
@@ -109,9 +109,3 @@ export default function AddRestaurantPage() {
     </main>
   )
 }
-"""
-
-with open('app/add/page.js', 'w') as f:
-    f.write(content)
-
-print('Done')
