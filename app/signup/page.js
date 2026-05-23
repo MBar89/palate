@@ -13,15 +13,26 @@ export default function SignUpPage() {
   const supabase = createClient()
 
   async function handleSignUp(e) {
-    e.preventDefault()
-    setError(null)
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      setError(error.message)
-    } else {
-      setSuccess(true)
-    }
+  e.preventDefault()
+  setError(null)
+  const params = new URLSearchParams(window.location.search)
+  const inviteCode = params.get('invite')
+
+  const { data, error } = await supabase.auth.signUp({ email, password })
+  if (error) {
+    setError(error.message)
+    return
   }
+
+  if (inviteCode && data.user) {
+    await supabase
+      .from('invites')
+      .update({ used_by: data.user.id })
+      .eq('code', inviteCode)
+  }
+
+  setSuccess(true)
+}
 
   if (success) return (
     <main style={styles.container}>

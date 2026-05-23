@@ -1,6 +1,4 @@
-import os
-
-content = """'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -54,11 +52,3 @@ export default function InvitePage() {
     </main>
   )
 }
-"""
-
-path = os.path.join('app', 'invite', '[code]', 'page.js')
-os.makedirs(os.path.dirname(path), exist_ok=True)
-with open(path, 'w') as f:
-    f.write(content)
-
-print('Done')

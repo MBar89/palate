@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [topTags, setTopTags] = useState([])
   const [reviewCount, setReviewCount] = useState(0)
   const [signals, setSignals] = useState([])
+  const [inviteCopied, setInviteCopied] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -17,10 +18,8 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
-
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(p)
-
       const { data: reviews } = await supabase.from('reviews').select('tags, worth_the_price').eq('user_id', user.id)
       if (reviews) {
         setReviewCount(reviews.length)
@@ -61,6 +60,15 @@ export default function ProfilePage() {
   async function handleSignOut() {
     await supabase.auth.signOut()
     window.location.href = '/login'
+  }
+
+  async function generateInvite() {
+    const code = Math.random().toString(36).substring(2, 10)
+    await supabase.from('invites').insert({ code, created_by: user.id })
+    const link = window.location.origin + '/invite/' + code
+    await navigator.clipboard.writeText(link)
+    setInviteCopied(true)
+    setTimeout(() => setInviteCopied(false), 3000)
   }
 
   return (
@@ -118,6 +126,12 @@ export default function ProfilePage() {
           <button onClick={() => window.location.href='/'} style={{padding:'12px 28px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',cursor:'pointer'}}>Browse restaurants</button>
         </div>
       )}
+
+      <div style={{padding:'0 16px 16px'}}>
+        <button onClick={generateInvite} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',fontSize:'15px',fontWeight:'500',cursor:'pointer',boxShadow:'0 2px 12px rgba(26,23,20,0.06)'}}>
+          {inviteCopied ? 'Link copied!' : 'Share invite link ↗'}
+        </button>
+      </div>
 
       <NavBar active="profile" />
     </main>
