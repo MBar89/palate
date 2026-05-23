@@ -20,37 +20,70 @@ function SkeletonCard() {
   )
 }
 
+function LandingPage() {
+  return (
+    <main style={{minHeight:'100vh',background:'#3D2B4F',fontFamily:'sans-serif'}}>
+      <div style={{padding:'24px 24px 0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
+        <button onClick={() => window.location.href='/login'} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Log in</button>
+      </div>
+      <div style={{padding:'64px 24px 48px',maxWidth:'480px',margin:'0 auto',textAlign:'center'}}>
+        <h2 style={{fontFamily:'Georgia,serif',fontSize:'40px',color:'#F7F3EE',fontStyle:'italic',lineHeight:'1.2',marginBottom:'16px'}}>Restaurants people like you love</h2>
+        <p style={{fontSize:'16px',color:'#F7F3EE',lineHeight:'1.6',marginBottom:'40px',opacity:0.7}}>Not star averages from strangers. Recommendations from people who eat exactly like you.</p>
+        <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer',marginBottom:'12px'}}>Get started — it is free</button>
+        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.4}}>London restaurants · taste-matched recommendations</p>
+      </div>
+      <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto'}}>
+        <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
+            <div style={{fontSize:'24px',marginBottom:'8px'}}>✦</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Taste-matched feed</div>
+            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>See a match score for every restaurant based on people who eat like you.</div>
+          </div>
+          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
+            <div style={{fontSize:'24px',marginBottom:'8px'}}>🏷</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Tag-based reviews</div>
+            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>No essays. Just tags — worth the journey, order the turbot, locals only.</div>
+          </div>
+          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
+            <div style={{fontSize:'24px',marginBottom:'8px'}}>👥</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Follow people like you</div>
+            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>Find people with your taste and see what they love.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto',textAlign:'center'}}>
+        <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer'}}>Start discovering →</button>
+      </div>
+    </main>
+  )
+}
+
 export default function HomePage() {
   const [restaurants, setRestaurants] = useState([])
   const [friendActivity, setFriendActivity] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [savedIds, setSavedIds] = useState(new Set())
+  const [isLoggedOut, setIsLoggedOut] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setUser(user)
-
-      const { data: ratings } = await supabase
-        .from('calibration_ratings')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1)
-
-      if (!ratings || ratings.length === 0) {
-        window.location.href = '/calibration'
+      if (!user) {
+        setIsLoggedOut(true)
+        setLoading(false)
         return
       }
-
+      setUser(user)
+      const { data: ratings } = await supabase.from('calibration_ratings').select('id').eq('user_id', user.id).limit(1)
+      if (!ratings || ratings.length === 0) { window.location.href = '/calibration'; return }
       const [{ data: feed }, { data: saves }, { data: friends }] = await Promise.all([
         supabase.rpc('get_personalised_feed', { user_uuid: user.id }),
         supabase.from('saves').select('restaurant_id').eq('user_id', user.id),
         supabase.rpc('get_friend_activity', { user_uuid: user.id }),
       ])
-
       if (feed) setRestaurants(feed)
       if (saves) setSavedIds(new Set(saves.map(s => s.restaurant_id)))
       if (friends) setFriendActivity(friends)
@@ -73,8 +106,20 @@ export default function HomePage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    window.location.href = '/login'
+    window.location.href = '/'
   }
+
+  if (loading) return (
+    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',padding:'0 0 80px'}}>
+      <div style={{background:'#3D2B4F',padding:'16px 24px'}}>
+        <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
+      </div>
+      <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Your matches</div>
+      <div style={{padding:'0 16px'}}><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
+    </main>
+  )
+
+  if (isLoggedOut) return <LandingPage />
 
   return (
     <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',padding:'0 0 80px'}}>
@@ -82,7 +127,6 @@ export default function HomePage() {
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
         {user && <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>}
       </div>
-
       {friendActivity.length > 0 && (
         <>
           <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>From people you follow</div>
@@ -91,62 +135,42 @@ export default function HomePage() {
               <div key={i} onClick={() => window.location.href='/restaurant/'+r.restaurant_id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
                 <div style={{fontFamily:'Georgia,serif',fontSize:'17px',color:'#1A1714',marginBottom:'2px'}}>{r.restaurant_name}</div>
                 <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
-                {r.tags && r.tags.length > 0 && (
-                  <div>{r.tags.slice(0,3).map(tag => (
-                    <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
-                  ))}</div>
-                )}
+                {r.tags && r.tags.length > 0 && <div>{r.tags.slice(0,3).map(tag => (<span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>))}</div>}
               </div>
             ))}
           </div>
         </>
       )}
-
       <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Your matches</div>
-
       <div style={{padding:'0 16px'}}>
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : restaurants.length === 0 ? (
+        {restaurants.length === 0 ? (
           <div style={{padding:'48px 24px',textAlign:'center'}}>
             <div style={{fontSize:'32px',marginBottom:'12px'}}>🍽</div>
             <h3 style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'8px'}}>No matches yet</h3>
             <p style={{fontSize:'14px',color:'#9A928A',marginBottom:'20px'}}>Review some restaurants to improve your matches.</p>
             <button onClick={() => window.location.href='/explore'} style={{padding:'12px 28px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',cursor:'pointer'}}>Browse restaurants</button>
           </div>
-        ) : (
-          restaurants.map(r => (
-            <div key={r.id} onClick={() => window.location.href='/restaurant/'+r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'6px'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{r.name}</div>
-                  <div style={{fontSize:'12px',color:'#9A928A'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:'8px',flexShrink:0,marginLeft:'8px'}}>
-                  <div style={{fontSize:'12px',fontWeight:'500',padding:'4px 10px',borderRadius:'20px',background:'#E8E0F5',color:'#3D2B4F'}}>{r.match_score}% match</div>
-                  <button onClick={(e) => toggleSave(e, r.id)} style={{background:'none',border:'none',cursor:'pointer',padding:'2px',lineHeight:0}}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill={savedIds.has(r.id)?'#3D2B4F':'none'} stroke="#3D2B4F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                  </button>
-                </div>
+        ) : restaurants.map(r => (
+          <div key={r.id} onClick={() => window.location.href='/restaurant/'+r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'6px'}}>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{r.name}</div>
+                <div style={{fontSize:'12px',color:'#9A928A'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
               </div>
-              <div style={{height:'3px',background:'#DDD6CC',borderRadius:'2px',overflow:'hidden',marginBottom:'8px'}}>
-                <div style={{height:'100%',background:'linear-gradient(90deg,#8B6FAD,#3D2B4F)',borderRadius:'2px',width:r.match_score+'%'}}></div>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',flexShrink:0,marginLeft:'8px'}}>
+                <div style={{fontSize:'12px',fontWeight:'500',padding:'4px 10px',borderRadius:'20px',background:'#E8E0F5',color:'#3D2B4F'}}>{r.match_score}% match</div>
+                <button onClick={(e) => toggleSave(e, r.id)} style={{background:'none',border:'none',cursor:'pointer',padding:'2px',lineHeight:0}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill={savedIds.has(r.id)?'#3D2B4F':'none'} stroke="#3D2B4F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                </button>
               </div>
-              {r.top_tags && r.top_tags.length > 0 && (
-                <div>{r.top_tags.map(tag => (
-                  <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
-                ))}</div>
-              )}
             </div>
-          ))
-        )}
+            <div style={{height:'3px',background:'#DDD6CC',borderRadius:'2px',overflow:'hidden',marginBottom:'8px'}}>
+              <div style={{height:'100%',background:'linear-gradient(90deg,#8B6FAD,#3D2B4F)',borderRadius:'2px',width:r.match_score+'%'}}></div>
+            </div>
+            {r.top_tags && r.top_tags.length > 0 && <div>{r.top_tags.map(tag => (<span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>))}</div>}
+          </div>
+        ))}
       </div>
-
       <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#F7F3EE',borderTop:'1px solid #DDD6CC',display:'flex',justifyContent:'space-around',padding:'10px 0 20px'}}>
         <button onClick={() => window.location.href='/'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D2B4F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
