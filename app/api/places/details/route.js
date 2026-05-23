@@ -1,0 +1,13 @@
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const placeId = searchParams.get('place_id')
+
+  if (!placeId) return Response.json({ result: null })
+
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,address_components,price_level&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`
+
+  const res = await fetch(url)
+  const data = await res.json()
+
+  return Response.json(data)
+}

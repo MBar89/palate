@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 
@@ -13,7 +13,45 @@ export default function AddRestaurantPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [placeId, setPlaceId] = useState(null)
+  const searchTimeout = useRef(null)
   const supabase = createClient()
+
+  async function searchPlaces(query) {
+  if (!query || query.length < 3) { setSuggestions([]); return }
+  clearTimeout(searchTimeout.current)
+  searchTimeout.current = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      if (data.predictions) setSuggestions(data.predictions.slice(0, 5))
+    } catch (e) {
+      console.error('Places error:', e)
+    }
+  }, 300)
+}
+
+  async function selectPlace(prediction) {
+  setName(prediction.structured_formatting.main_text)
+  setPlaceId(prediction.place_id)
+  setSuggestions([])
+
+  try {
+    const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`)
+    const data = await res.json()
+    if (data.result) {
+      const components = data.result.address_components || []
+      const hood = components.find(c => c.types.includes('neighborhood') || c.types.includes('sublocality'))
+      const a = components.find(c => c.types.includes('postal_town') || c.types.includes('locality'))
+      if (hood) setNeighbourhood(hood.long_name)
+      if (a) setArea(a.long_name)
+      if (data.result.price_level) setPriceRange(data.result.price_level)
+    }
+  } catch (e) {
+    console.error('Place details error:', e)
+  }
+}
 
   async function handleSubmit() {
     if (!name || !cuisine || !neighbourhood || !priceRange) {
@@ -36,12 +74,7 @@ export default function AddRestaurantPage() {
       submitted_by: user.id,
     })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    if (error) { setError(error.message); setLoading(false); return }
     setSuccess(true)
     setLoading(false)
   }
@@ -55,7 +88,7 @@ export default function AddRestaurantPage() {
       <div style={{padding:'48px 24px',textAlign:'center'}}>
         <div style={{fontSize:'32px',marginBottom:'12px'}}>✓</div>
         <h2 style={{fontFamily:'Georgia,serif',fontSize:'22px',color:'#1A1714',marginBottom:'8px'}}>Restaurant submitted</h2>
-        <p style={{fontSize:'14px',color:'#5A534E',marginBottom:'24px',lineHeight:'1.5'}}>Thanks for contributing. It will appear in the app once approved.</p>
+        <p style={{fontSize:'14px',color:'#5A534E',marginBottom:'24px',lineHeight:'1.5'}}>Thanks for contributing. It will appear once approved.</p>
         <button onClick={() => window.location.href='/'} style={{padding:'12px 28px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',cursor:'pointer'}}>Back to feed</button>
       </div>
     </main>
@@ -69,9 +102,25 @@ export default function AddRestaurantPage() {
       </div>
 
       <div style={{padding:'24px 16px',maxWidth:'480px',margin:'0 auto'}}>
-        <div style={{marginBottom:'16px'}}>
+
+        <div style={{marginBottom:'16px',position:'relative'}}>
           <label style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:'6px'}}>Restaurant name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. The Clove Club" style={{width:'100%',padding:'12px 14px',borderRadius:'12px',border:'1.5px solid #DDD6CC',background:'white',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none'}} />
+          <input
+            value={name}
+            onChange={e => { setName(e.target.value); searchPlaces(e.target.value) }}
+            placeholder="Search for a restaurant..."
+            style={{width:'100%',padding:'12px 14px',borderRadius:'12px',border:'1.5px solid #DDD6CC',background:'white',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none'}}
+          />
+          {suggestions.length > 0 && (
+            <div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',borderRadius:'12px',boxShadow:'0 4px 24px rgba(26,23,20,0.12)',zIndex:10,overflow:'hidden',marginTop:'4px'}}>
+              {suggestions.map(s => (
+                <div key={s.place_id} onClick={() => selectPlace(s)} style={{padding:'12px 14px',cursor:'pointer',borderBottom:'1px solid #EDE8E1',fontSize:'14px',color:'#1A1714'}}>
+                  <div style={{fontWeight:'500'}}>{s.structured_formatting.main_text}</div>
+                  <div style={{fontSize:'12px',color:'#9A928A',marginTop:'2px'}}>{s.structured_formatting.secondary_text}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{display:'flex',gap:'10px',marginBottom:'16px'}}>
