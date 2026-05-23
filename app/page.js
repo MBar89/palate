@@ -22,6 +22,7 @@ function SkeletonCard() {
 
 export default function HomePage() {
   const [restaurants, setRestaurants] = useState([])
+  const [friendActivity, setFriendActivity] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [savedIds, setSavedIds] = useState(new Set())
@@ -44,13 +45,15 @@ export default function HomePage() {
         return
       }
 
-      const [{ data: feed }, { data: saves }] = await Promise.all([
+      const [{ data: feed }, { data: saves }, { data: friends }] = await Promise.all([
         supabase.rpc('get_personalised_feed', { user_uuid: user.id }),
-        supabase.from('saves').select('restaurant_id').eq('user_id', user.id)
+        supabase.from('saves').select('restaurant_id').eq('user_id', user.id),
+        supabase.rpc('get_friend_activity', { user_uuid: user.id }),
       ])
 
       if (feed) setRestaurants(feed)
       if (saves) setSavedIds(new Set(saves.map(s => s.restaurant_id)))
+      if (friends) setFriendActivity(friends)
       setLoading(false)
     }
     load()
@@ -79,6 +82,25 @@ export default function HomePage() {
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
         {user && <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>}
       </div>
+
+      {friendActivity.length > 0 && (
+        <>
+          <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>From people you follow</div>
+          <div style={{padding:'0 16px'}}>
+            {friendActivity.map((r, i) => (
+              <div key={i} onClick={() => window.location.href='/restaurant/'+r.restaurant_id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
+                <div style={{fontFamily:'Georgia,serif',fontSize:'17px',color:'#1A1714',marginBottom:'2px'}}>{r.restaurant_name}</div>
+                <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
+                {r.tags && r.tags.length > 0 && (
+                  <div>{r.tags.slice(0,3).map(tag => (
+                    <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                  ))}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Your matches</div>
 
@@ -126,19 +148,23 @@ export default function HomePage() {
       </div>
 
       <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#F7F3EE',borderTop:'1px solid #DDD6CC',display:'flex',justifyContent:'space-around',padding:'10px 0 20px'}}>
-        <button onClick={() => window.location.href='/'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 16px'}}>
+        <button onClick={() => window.location.href='/'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D2B4F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span style={{fontSize:'10px',color:'#3D2B4F'}}>Home</span>
         </button>
-        <button onClick={() => window.location.href='/explore'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 16px'}}>
+        <button onClick={() => window.location.href='/explore'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A928A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <span style={{fontSize:'10px',color:'#9A928A'}}>Explore</span>
         </button>
-        <button onClick={() => window.location.href='/saved'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 16px'}}>
+        <button onClick={() => window.location.href='/saved'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A928A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           <span style={{fontSize:'10px',color:'#9A928A'}}>Saved</span>
         </button>
-        <button onClick={() => window.location.href='/profile'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 16px'}}>
+        <button onClick={() => window.location.href='/people'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A928A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <span style={{fontSize:'10px',color:'#9A928A'}}>People</span>
+        </button>
+        <button onClick={() => window.location.href='/profile'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9A928A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span style={{fontSize:'10px',color:'#9A928A'}}>Profile</span>
         </button>
