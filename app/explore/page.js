@@ -77,7 +77,10 @@ export default function ExplorePage() {
       <div style={{display:'flex',gap:'8px',padding:'0 16px 12px',overflowX:'auto'}}>
         {filters.map(f => (
           <button key={f.value} onClick={() => setActiveFilter(f.value)} style={{whiteSpace:'nowrap',fontSize:'12px',padding:'6px 14px',borderRadius:'20px',border:activeFilter===f.value?'1.5px solid #8B6FAD':'1.5px solid #DDD6CC',background:activeFilter===f.value?'#E8E0F5':'#F7F3EE',color:activeFilter===f.value?'#3D2B4F':'#5A534E',fontWeight:activeFilter===f.value?'500':'400',cursor:'pointer',flexShrink:0,fontFamily:'sans-serif'}}>{f.label}</button>
-        ))}
+      ))}
+      </div>
+      <div style={{padding:'0 16px 12px',display:'flex',justifyContent:'flex-end'}}>
+        <button onClick={() => window.location.href='/add'} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',border:'none',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500'}}>+ Add restaurant</button>
       </div>
       <div style={{padding:'0 16px'}}>
         {loading ? (
