@@ -108,7 +108,12 @@ export default function ProfilePage() {
     <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'80px'}}>
       <div style={{background:'#3D2B4F',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
-        <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          {user?.email === 'myles@barhamaviation.co.uk' && (
+            <button onClick={() => window.location.href='/admin'} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.3)',color:'rgba(247,243,238,0.6)',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Admin</button>
+          )}
+          <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>
+        </div>
       </div>
 
       <div style={{padding:'16px 16px 8px',display:'flex',alignItems:'center',gap:'12px'}}>
