@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 
+function getInitials(email) {
+  if (!email) return '?'
+  const parts = email.split('@')[0].split(/[._-]/)
+  return parts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -13,6 +19,9 @@ export default function ProfilePage() {
   const [reviewedPlaces, setReviewedPlaces] = useState([])
   const [inviteCopied, setInviteCopied] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameError, setUsernameError] = useState(null)
+  const [usernameSaved, setUsernameSaved] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -33,12 +42,10 @@ export default function ProfilePage() {
       if (reviews) {
         setReviewCount(reviews.length)
         setReviewedPlaces(reviews)
-
         const tagCounts = {}
         let worthCount = 0
         let atmosphereTags = 0
         let chainTolerance = 0
-
         reviews.forEach(rev => {
           if (rev.worth_the_price) worthCount++
           if (rev.tags) rev.tags.forEach(tag => {
@@ -47,10 +54,8 @@ export default function ProfilePage() {
             if (tag === 'neighbourhood gem' || tag === 'locals only') chainTolerance++
           })
         })
-
         const sorted = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0,8).map(([t]) => t)
         setTopTags(sorted)
-
         if (reviews.length > 0) {
           setSignals([
             { name: 'Atmosphere over food', value: Math.min(100, Math.round((atmosphereTags / reviews.length) * 200)), strong: atmosphereTags > reviews.length * 0.3 },
@@ -76,6 +81,17 @@ export default function ProfilePage() {
     window.location.href = '/'
   }
 
+  async function saveUsername() {
+    setUsernameError(null)
+    const cleaned = usernameInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+    if (!cleaned || cleaned.length < 3) { setUsernameError('Username must be at least 3 characters'); return }
+    if (cleaned.length > 20) { setUsernameError('Username must be 20 characters or less'); return }
+    const { error } = await supabase.from('profiles').update({ username: cleaned, display_name: cleaned }).eq('id', user.id)
+    if (error) { setUsernameError(error.message.includes('unique') ? 'That username is already taken' : error.message); return }
+    setProfile(prev => ({ ...prev, username: cleaned, display_name: cleaned }))
+    setUsernameSaved(true)
+  }
+
   async function generateInvite() {
     const code = Math.random().toString(36).substring(2, 10)
     await supabase.from('invites').insert({ code, created_by: user.id })
@@ -85,6 +101,9 @@ export default function ProfilePage() {
     setTimeout(() => setInviteCopied(false), 3000)
   }
 
+  const initials = getInitials(user?.email)
+  const displayName = profile?.display_name || profile?.username || initials
+
   return (
     <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'80px'}}>
       <div style={{background:'#3D2B4F',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -92,10 +111,37 @@ export default function ProfilePage() {
         <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>
       </div>
 
-      <div style={{padding:'16px 16px 8px'}}>
-        <h2 style={{fontFamily:'Georgia,serif',fontSize:'22px',color:'#1A1714',fontStyle:'italic',marginBottom:'2px'}}>Your palate</h2>
-        <p style={{fontSize:'13px',color:'#9A928A'}}>Built from {reviewCount} place{reviewCount !== 1 ? 's' : ''} reviewed</p>
+      <div style={{padding:'16px 16px 8px',display:'flex',alignItems:'center',gap:'12px'}}>
+        <div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#E8E0F5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',fontWeight:'500',color:'#3D2B4F',flexShrink:0}}>{initials}</div>
+        <div>
+          <h2 style={{fontFamily:'Georgia,serif',fontSize:'20px',color:'#1A1714',fontStyle:'italic',marginBottom:'2px'}}>{displayName}</h2>
+          <p style={{fontSize:'13px',color:'#9A928A'}}>Built from {reviewCount} place{reviewCount !== 1 ? 's' : ''} reviewed</p>
+        </div>
       </div>
+
+      {!profile?.username && !usernameSaved && (
+        <div style={{margin:'8px 16px 16px',background:'white',borderRadius:'16px',padding:'16px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)',border:'1.5px solid #E8E0F5'}}>
+          <div style={{fontSize:'14px',fontWeight:'500',color:'#1A1714',marginBottom:'4px'}}>Set your username</div>
+          <div style={{fontSize:'13px',color:'#9A928A',marginBottom:'12px'}}>So people can find you on palate.</div>
+          <div style={{display:'flex',gap:'8px'}}>
+            <input
+              value={usernameInput}
+              onChange={e => setUsernameInput(e.target.value)}
+              placeholder="e.g. myles_eats"
+              style={{flex:1,padding:'10px 12px',borderRadius:'10px',border:'1.5px solid #DDD6CC',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none'}}
+              onKeyDown={e => e.key === 'Enter' && saveUsername()}
+            />
+            <button onClick={saveUsername} style={{padding:'10px 16px',borderRadius:'10px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'13px',fontWeight:'500',cursor:'pointer',fontFamily:'sans-serif'}}>Save</button>
+          </div>
+          {usernameError && <p style={{fontSize:'12px',color:'#A03020',marginTop:'6px'}}>{usernameError}</p>}
+        </div>
+      )}
+
+      {usernameSaved && (
+        <div style={{margin:'0 16px 16px',background:'#DCF0E6',borderRadius:'12px',padding:'12px 16px',fontSize:'13px',color:'#2A6B4F',fontWeight:'500'}}>
+          Username set — people can now find you as @{profile?.username}
+        </div>
+      )}
 
       {profile && profile.cluster && (
         <div style={{margin:'0 16px 16px',background:'linear-gradient(135deg,#3D2B4F,#6B4E8A)',borderRadius:'16px',padding:'20px',color:'#F7F3EE'}}>
