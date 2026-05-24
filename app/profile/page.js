@@ -10,7 +10,9 @@ export default function ProfilePage() {
   const [topTags, setTopTags] = useState([])
   const [reviewCount, setReviewCount] = useState(0)
   const [signals, setSignals] = useState([])
+  const [reviewedPlaces, setReviewedPlaces] = useState([])
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [showAllReviews, setShowAllReviews] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -18,15 +20,25 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
+
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(p)
-      const { data: reviews } = await supabase.from('reviews').select('tags, worth_the_price').eq('user_id', user.id)
+
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('tags, worth_the_price, restaurant_id, restaurants(name, cuisine, neighbourhood, price_range)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
       if (reviews) {
         setReviewCount(reviews.length)
+        setReviewedPlaces(reviews)
+
         const tagCounts = {}
         let worthCount = 0
         let atmosphereTags = 0
         let chainTolerance = 0
+
         reviews.forEach(rev => {
           if (rev.worth_the_price) worthCount++
           if (rev.tags) rev.tags.forEach(tag => {
@@ -35,8 +47,10 @@ export default function ProfilePage() {
             if (tag === 'neighbourhood gem' || tag === 'locals only') chainTolerance++
           })
         })
+
         const sorted = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0,8).map(([t]) => t)
         setTopTags(sorted)
+
         if (reviews.length > 0) {
           setSignals([
             { name: 'Atmosphere over food', value: Math.min(100, Math.round((atmosphereTags / reviews.length) * 200)), strong: atmosphereTags > reviews.length * 0.3 },
@@ -59,7 +73,7 @@ export default function ProfilePage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    window.location.href = '/login'
+    window.location.href = '/'
   }
 
   async function generateInvite() {
@@ -115,6 +129,32 @@ export default function ProfilePage() {
           <div style={{padding:'0 16px 16px'}}>
             {topTags.map(tag => (
               <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'3px'}}>{tag}</span>
+            ))}
+          </div>
+        </>
+      )}
+
+      {reviewedPlaces.length > 0 && (
+        <>
+          <div style={{padding:'0 16px 8px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Places you have reviewed</div>
+            {reviewedPlaces.length > 5 && (
+              <span onClick={() => setShowAllReviews(prev => !prev)} style={{fontSize:'12px',color:'#3D2B4F',cursor:'pointer',fontWeight:'500'}}>
+                {showAllReviews ? 'Show less' : `See all ${reviewedPlaces.length}`}
+              </span>
+            )}
+          </div>
+          <div style={{padding:'0 16px 16px'}}>
+            {(showAllReviews ? reviewedPlaces : reviewedPlaces.slice(0,5)).map((rev, i) => (
+              <div key={i} onClick={() => window.location.href='/restaurant/'+rev.restaurant_id} style={{background:'white',borderRadius:'16px',padding:'14px 16px',marginBottom:'8px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)',cursor:'pointer'}}>
+                <div style={{fontFamily:'Georgia,serif',fontSize:'16px',color:'#1A1714',marginBottom:'2px'}}>{rev.restaurants?.name}</div>
+                <div style={{fontSize:'12px',color:'#9A928A',marginBottom:rev.tags && rev.tags.length > 0 ? '8px' : 0}}>{rev.restaurants?.cuisine} · {rev.restaurants?.neighbourhood} · {'£'.repeat(rev.restaurants?.price_range || 1)}</div>
+                {rev.tags && rev.tags.length > 0 && (
+                  <div>{rev.tags.slice(0,3).map(tag => (
+                    <span key={tag} style={{display:'inline-block',fontSize:'11px',padding:'3px 8px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                  ))}</div>
+                )}
+              </div>
             ))}
           </div>
         </>
