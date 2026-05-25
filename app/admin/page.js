@@ -34,25 +34,33 @@ export default function AdminPage() {
     load()
   }, [])
 
+  async function adminAction(action, id) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ action, id }),
+    })
+    return res.ok
+  }
+
   async function approve(id) {
-    await supabase.from('restaurants').update({ status: 'approved' }).eq('id', id)
+    const ok = await adminAction('approve', id)
+    if (!ok) return
     const restaurant = pending.find(r => r.id === id)
     setPending(prev => prev.filter(r => r.id !== id))
     if (restaurant) setApproved(prev => [...prev, { ...restaurant, status: 'approved' }].sort((a, b) => a.name.localeCompare(b.name)))
   }
 
   async function reject(id) {
-    await supabase.from('restaurants').update({ status: 'rejected' }).eq('id', id)
-    setPending(prev => prev.filter(r => r.id !== id))
+    const ok = await adminAction('reject', id)
+    if (ok) setPending(prev => prev.filter(r => r.id !== id))
   }
 
   async function deleteRestaurant(id) {
     setDeleting(true)
-    await supabase.from('saves').delete().eq('restaurant_id', id)
-    await supabase.from('reviews').delete().eq('restaurant_id', id)
-    await supabase.from('calibration_ratings').delete().eq('restaurant_id', id)
-    await supabase.from('restaurants').delete().eq('id', id)
-    setApproved(prev => prev.filter(r => r.id !== id))
+    const ok = await adminAction('delete', id)
+    if (ok) setApproved(prev => prev.filter(r => r.id !== id))
     setDeleteConfirm(null)
     setDeleting(false)
   }
