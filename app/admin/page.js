@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('pending')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [approvedSearch, setApprovedSearch] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
@@ -105,12 +106,19 @@ export default function AdminPage() {
             ))
           )
         ) : (
-          approved.length === 0 ? (
-            <div style={{padding:'48px 24px',textAlign:'center'}}>
-              <p style={{fontSize:'14px',color:'#9A928A'}}>No approved restaurants</p>
-            </div>
-          ) : (
-            approved.map(r => (
+          <>
+            <input
+              value={approvedSearch}
+              onChange={e => setApprovedSearch(e.target.value)}
+              placeholder="Search approved restaurants..."
+              style={{width:'100%',padding:'11px 14px',borderRadius:'12px',border:'1.5px solid #DDD6CC',background:'white',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none',boxSizing:'border-box',marginBottom:'12px'}}
+            />
+            {approved.filter(r => r.name.toLowerCase().includes(approvedSearch.toLowerCase()) || r.neighbourhood?.toLowerCase().includes(approvedSearch.toLowerCase()) || r.cuisine?.toLowerCase().includes(approvedSearch.toLowerCase())).length === 0 ? (
+              <div style={{padding:'48px 24px',textAlign:'center'}}>
+                <p style={{fontSize:'14px',color:'#9A928A'}}>{approved.length === 0 ? 'No approved restaurants' : 'No results'}</p>
+              </div>
+            ) : (
+            approved.filter(r => r.name.toLowerCase().includes(approvedSearch.toLowerCase()) || r.neighbourhood?.toLowerCase().includes(approvedSearch.toLowerCase()) || r.cuisine?.toLowerCase().includes(approvedSearch.toLowerCase())).map(r => (
               <div key={r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)'}}>
                 <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'12px'}}>
                   <div style={{flex:1}}>
@@ -135,7 +143,8 @@ export default function AdminPage() {
                 )}
               </div>
             ))
-          )
+            )}
+          </>
         )}
       </div>
     </main>
