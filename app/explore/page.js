@@ -92,7 +92,7 @@ export default function ExplorePage() {
     <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom: user ? '80px' : '80px'}}>
       <div style={{background:'#3D2B4F',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
-        {user ? (
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
           <button onClick={() => setShowFilterSheet(true)} style={{position:'relative',background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
             Filter
@@ -100,12 +100,10 @@ export default function ExplorePage() {
               <span style={{position:'absolute',top:'-6px',right:'-6px',background:'#F7F3EE',color:'#3D2B4F',borderRadius:'50%',width:'16px',height:'16px',fontSize:'10px',fontWeight:'500',display:'flex',alignItems:'center',justifyContent:'center'}}>{activeFilterCount}</span>
             )}
           </button>
-        ) : (
-          <div style={{display:'flex',gap:'8px'}}>
+          {!user && (
             <button onClick={() => window.location.href='/login'} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Log in</button>
-            <button onClick={() => window.location.href='/signup'} style={{background:'#F7F3EE',border:'none',color:'#3D2B4F',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Sign up</button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div style={{padding:'12px 16px'}}>
