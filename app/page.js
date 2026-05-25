@@ -67,6 +67,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [savedIds, setSavedIds] = useState(new Set())
   const [isLoggedOut, setIsLoggedOut] = useState(false)
+  const [inspirationPick, setInspirationPick] = useState(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -92,6 +93,13 @@ export default function HomePage() {
     }
     load()
   }, [])
+
+  function pickInspiration() {
+    if (restaurants.length === 0) return
+    const pool = inspirationPick ? restaurants.filter(r => r.id !== inspirationPick.id) : restaurants
+    const pick = pool[Math.floor(Math.random() * pool.length)]
+    setInspirationPick(pick)
+  }
 
   async function toggleSave(e, restaurantId) {
     e.stopPropagation()
@@ -128,6 +136,15 @@ export default function HomePage() {
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
         {user && <button onClick={handleSignOut} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Sign out</button>}
       </div>
+
+      {restaurants.length > 0 && (
+        <div style={{padding:'12px 16px 0'}}>
+          <button onClick={pickInspiration} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'white',border:'1.5px solid #DDD6CC',color:'#3D2B4F',fontSize:'14px',fontWeight:'500',cursor:'pointer',fontFamily:'sans-serif',boxShadow:'0 2px 12px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}>
+            <span style={{fontSize:'16px'}}>✦</span> Give me inspiration
+          </button>
+        </div>
+      )}
+
       {friendActivity.length > 0 && (
         <>
           <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>From people you follow</div>
@@ -142,6 +159,7 @@ export default function HomePage() {
           </div>
         </>
       )}
+
       <div style={{padding:'16px 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Your matches</div>
       <div style={{padding:'0 16px'}}>
         {restaurants.length === 0 ? (
@@ -172,6 +190,7 @@ export default function HomePage() {
           </div>
         ))}
       </div>
+
       <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#F7F3EE',borderTop:'1px solid #DDD6CC',display:'flex',justifyContent:'space-around',padding:'10px 0 20px'}}>
         <button onClick={() => window.location.href='/'} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',background:'none',border:'none',cursor:'pointer',padding:'4px 10px'}}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D2B4F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -194,6 +213,41 @@ export default function HomePage() {
           <span style={{fontSize:'10px',color:'#9A928A'}}>Profile</span>
         </button>
       </div>
+
+      {inspirationPick && (
+        <div onClick={() => setInspirationPick(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(26,23,20,0.6)',zIndex:50,display:'flex',alignItems:'flex-end'}}>
+          <div onClick={e => e.stopPropagation()} style={{background:'#F7F3EE',borderRadius:'24px 24px 0 0',padding:'0 0 36px',width:'100%'}}>
+            <div style={{width:'36px',height:'4px',borderRadius:'2px',background:'#DDD6CC',margin:'12px auto 20px'}}></div>
+            <div style={{margin:'0 16px 16px',background:'linear-gradient(135deg,#3D2B4F,#6B4E8A)',borderRadius:'16px',padding:'24px',color:'#F7F3EE'}}>
+              <div style={{fontSize:'11px',opacity:0.6,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'8px'}}>Tonight's pick</div>
+              <div style={{fontFamily:'Georgia,serif',fontSize:'26px',fontStyle:'italic',marginBottom:'4px'}}>{inspirationPick.name}</div>
+              <div style={{fontSize:'13px',opacity:0.7,marginBottom:'16px'}}>{inspirationPick.cuisine} · {inspirationPick.neighbourhood} · {'£'.repeat(inspirationPick.price_range)}</div>
+              {inspirationPick.match_score && (
+                <>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
+                    <span style={{fontSize:'13px',opacity:0.7}}>Match for you</span>
+                    <span style={{fontSize:'13px',fontWeight:'500'}}>{inspirationPick.match_score}%</span>
+                  </div>
+                  <div style={{height:'3px',background:'rgba(255,255,255,0.2)',borderRadius:'2px',overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${inspirationPick.match_score}%`,background:'rgba(255,255,255,0.8)',borderRadius:'2px'}}></div>
+                  </div>
+                </>
+              )}
+              {inspirationPick.top_tags && inspirationPick.top_tags.length > 0 && (
+                <div style={{marginTop:'12px'}}>
+                  {inspirationPick.top_tags.slice(0,3).map(tag => (
+                    <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'rgba(255,255,255,0.15)',color:'#F7F3EE',margin:'2px'}}>{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{padding:'0 16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+              <button onClick={() => window.location.href='/restaurant/'+inspirationPick.id} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'15px',fontWeight:'500',cursor:'pointer',fontFamily:'sans-serif'}}>Let's go →</button>
+              <button onClick={pickInspiration} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'transparent',color:'#3D2B4F',border:'1.5px solid #DDD6CC',fontSize:'15px',fontWeight:'400',cursor:'pointer',fontFamily:'sans-serif'}}>Try another</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
