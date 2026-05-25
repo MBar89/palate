@@ -30,6 +30,7 @@ export default function ExplorePage() {
 
   const filters = [
     { label: 'All', value: 'all' },
+    { label: 'Trending', value: 'trending' },
     { label: 'Independents', value: 'independent' },
     { label: 'Special occasion', value: 'special' },
     { label: 'Neighbourhood gem', value: 'neighbourhood' },
@@ -81,6 +82,7 @@ export default function ExplorePage() {
         r.neighbourhood.toLowerCase().includes(q)
       )
     }
+    if (activeFilter === 'trending') results = results.filter(r => trendingIds.has(String(r.id)))
     if (activeFilter === 'independent') results = results.filter(r => !r.is_chain)
     if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).includes('special occasion'))
     if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).includes('neighbourhood gem'))
