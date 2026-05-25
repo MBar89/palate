@@ -104,7 +104,7 @@ export default function PeoplePage() {
 
   function PersonCard({ profile, isFollowing }) {
     return (
-      <div style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',display:'flex',alignItems:'center',gap:'12px'}}>
+      <div onClick={() => profile.username && (window.location.href='/user/'+profile.username)} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',display:'flex',alignItems:'center',gap:'12px',cursor:profile.username?'pointer':'default'}}>
         <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'#E8E0F5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'14px',fontWeight:'500',color:'#3D2B4F',flexShrink:0}}>
           {profile.username ? profile.username.slice(0,2).toUpperCase() : '?'}
         </div>
@@ -112,7 +112,7 @@ export default function PeoplePage() {
           <div style={{fontSize:'14px',fontWeight:'500',color:'#1A1714',marginBottom:'2px'}}>@{profile.username || 'unknown'}</div>
           <div style={{fontSize:'12px',color:'#9A928A'}}>{clusterLabels[profile.cluster] || 'Discovering their taste'}</div>
         </div>
-        <button onClick={() => toggleFollow(profile)} style={{padding:'6px 14px',borderRadius:'8px',border:isFollowing?'1.5px solid #DDD6CC':'1.5px solid #3D2B4F',background:isFollowing?'transparent':'#3D2B4F',color:isFollowing?'#9A928A':'#F7F3EE',fontSize:'12px',fontFamily:'sans-serif',cursor:'pointer',fontWeight:'500',flexShrink:0}}>
+        <button onClick={e => { e.stopPropagation(); toggleFollow(profile) }} style={{padding:'6px 14px',borderRadius:'8px',border:isFollowing?'1.5px solid #DDD6CC':'1.5px solid #3D2B4F',background:isFollowing?'transparent':'#3D2B4F',color:isFollowing?'#9A928A':'#F7F3EE',fontSize:'12px',fontFamily:'sans-serif',cursor:'pointer',fontWeight:'500',flexShrink:0}}>
           {isFollowing ? 'Following' : 'Follow'}
         </button>
       </div>
