@@ -126,25 +126,25 @@ export default function RestaurantPage() {
         <div style={{margin:'0 16px 16px',background:'white',borderRadius:'16px',padding:'16px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)'}}>
           {restaurant.address && (
             <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant.address)}`} target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'flex-start',gap:'10px',textDecoration:'none',marginBottom:restaurant.phone||restaurant.website||restaurant.opening_hours?'12px':'0'}}>
-              <span style={{fontSize:'16px',flexShrink:0,marginTop:'1px'}}>📍</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B6FAD" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'1px'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <span style={{fontSize:'13px',color:'#3D2B4F',lineHeight:'1.4'}}>{restaurant.address}</span>
             </a>
           )}
           {restaurant.phone && (
             <a href={`tel:${restaurant.phone}`} style={{display:'flex',alignItems:'center',gap:'10px',textDecoration:'none',marginBottom:restaurant.website||restaurant.opening_hours?'12px':'0'}}>
-              <span style={{fontSize:'16px',flexShrink:0}}>📞</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B6FAD" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
               <span style={{fontSize:'13px',color:'#3D2B4F'}}>{restaurant.phone}</span>
             </a>
           )}
           {restaurant.website && (
             <a href={restaurant.website} target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center',gap:'10px',textDecoration:'none',marginBottom:restaurant.opening_hours?'12px':'0'}}>
-              <span style={{fontSize:'16px',flexShrink:0}}>🌐</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B6FAD" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
               <span style={{fontSize:'13px',color:'#3D2B4F',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{restaurant.website.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'')}</span>
             </a>
           )}
           {restaurant.opening_hours && (
             <div style={{display:'flex',alignItems:'flex-start',gap:'10px'}}>
-              <span style={{fontSize:'16px',flexShrink:0,marginTop:'1px'}}>🕐</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B6FAD" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <div>
                 {restaurant.opening_hours.map((line, i) => (
                   <div key={i} style={{fontSize:'12px',color:'#5A534E',lineHeight:'1.7'}}>{line}</div>
