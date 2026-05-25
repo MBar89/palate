@@ -136,7 +136,7 @@ export default function UserProfilePage() {
           <div style={{padding:'0 16px 8px',fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase'}}>Top tags</div>
           <div style={{padding:'0 16px 16px'}}>
             {topTags.map(tag => (
-              <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'3px'}}>{tag}</span>
+              <span key={tag} onClick={() => window.location.href='/explore?tag='+encodeURIComponent(tag)} style={{display:'inline-block',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'3px',cursor:'pointer'}}>{tag}</span>
             ))}
           </div>
         </>
