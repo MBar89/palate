@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '../../../lib/supabase'
+import NavBar from '../../../components/NavBar'
 
 export default function UserProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -105,7 +106,7 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.id === profile.id
 
   return (
-    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'48px'}}>
+    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'80px'}}>
       {header}
 
       <div style={{padding:'16px 16px 8px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
@@ -163,6 +164,7 @@ export default function UserProfilePage() {
           <p style={{fontSize:'14px',color:'#9A928A'}}>No reviews yet.</p>
         </div>
       )}
+      <NavBar active="people" />
     </main>
   )
 }
