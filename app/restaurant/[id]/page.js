@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '../../../lib/supabase'
+import NavBar from '../../../components/NavBar'
 
 export default function RestaurantPage() {
   const [user, setUser] = useState(null)
@@ -99,7 +100,7 @@ export default function RestaurantPage() {
   const backDest = user ? '/' : '/explore'
 
   return (
-    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'48px'}}>
+    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'80px'}}>
       <div style={{background:'#3D2B4F',padding:'16px 24px',display:'flex',alignItems:'center',gap:'12px'}}>
         <button onClick={() => router.push(backDest)} style={{background:'transparent',border:'none',color:'#F7F3EE',cursor:'pointer',fontSize:'20px'}}>←</button>
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'20px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
@@ -175,6 +176,7 @@ export default function RestaurantPage() {
           <button onClick={() => window.location.href='/login'} style={{background:'transparent',border:'none',color:'#F7F3EE',fontSize:'13px',opacity:0.6,cursor:'pointer'}}>Already have an account? Log in</button>
         </div>
       )}
+      <NavBar active="" />
     </main>
   )
 }
