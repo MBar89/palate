@@ -19,6 +19,7 @@ export default function RestaurantPage() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [existingTags, setExistingTags] = useState([])
+  const [existingReviewId, setExistingReviewId] = useState(null)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -40,12 +41,24 @@ export default function RestaurantPage() {
       }
 
       if (user) {
-        const { data: t } = await supabase.from('tags').select('*').order('category')
+        const [{ data: t }, { data: feed }, { data: myReview }] = await Promise.all([
+          supabase.from('tags').select('*').order('category'),
+          supabase.rpc('get_personalised_feed', { user_uuid: user.id }),
+          supabase.from('reviews').select('*').eq('user_id', user.id).eq('restaurant_id', params.id).maybeSingle(),
+        ])
         setTags(t || [])
-        const { data: feed } = await supabase.rpc('get_personalised_feed', { user_uuid: user.id })
         if (feed) {
           const match = feed.find(item => String(item.id) === String(params.id))
           if (match?.match_score) setMatchScore(Math.round(match.match_score))
+        }
+        if (myReview) {
+          setExistingReviewId(myReview.id)
+          setSelectedTags(myReview.tags || [])
+          setWouldGoBack(myReview.would_go_back ?? null)
+          setWorthSpecialTrip(myReview.worth_special_trip ?? null)
+          setBetterThanExpected(myReview.better_than_expected ?? null)
+          setServiceGood(myReview.service_good ?? null)
+          setDiscoveredFavourite(myReview.discovered_favourite ?? null)
         }
       }
     }
@@ -59,23 +72,26 @@ export default function RestaurantPage() {
   async function handleSubmit() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('reviews').insert({
-      user_id: user.id,
-      restaurant_id: params.id,
+    const reviewData = {
       tags: selectedTags,
       would_go_back: wouldGoBack,
       worth_special_trip: worthSpecialTrip,
       better_than_expected: betterThanExpected,
       service_good: serviceGood,
       discovered_favourite: discoveredFavourite,
-    })
+    }
+    const { error } = existingReviewId
+      ? await supabase.from('reviews').update(reviewData).eq('id', existingReviewId)
+      : await supabase.from('reviews').insert({ ...reviewData, user_id: user.id, restaurant_id: params.id })
     if (!error) {
       setSaved(true)
-      fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer_id: user.id, restaurant_id: params.id }),
-      }).catch(e => console.error('Notify error:', e))
+      if (!existingReviewId) {
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewer_id: user.id, restaurant_id: params.id }),
+        }).catch(e => console.error('Notify error:', e))
+      }
     }
     setLoading(false)
   }
@@ -90,7 +106,7 @@ export default function RestaurantPage() {
       </div>
       <div style={{padding:'48px 24px',textAlign:'center'}}>
         <div style={{fontSize:'32px',marginBottom:'12px'}}>✓</div>
-        <h2 style={{fontFamily:'Georgia,serif',fontSize:'22px',color:'#1A1714',marginBottom:'8px'}}>Review saved</h2>
+        <h2 style={{fontFamily:'Georgia,serif',fontSize:'22px',color:'#1A1714',marginBottom:'8px'}}>{existingReviewId ? 'Review updated' : 'Review saved'}</h2>
         <p style={{fontSize:'14px',color:'#5A534E',marginBottom:'24px'}}>Your taste profile has been updated.</p>
         <button onClick={() => router.push('/')} style={{padding:'12px 28px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',cursor:'pointer'}}>Back to feed</button>
       </div>
@@ -167,7 +183,7 @@ export default function RestaurantPage() {
       {user ? (
         <>
           <div style={{padding:'0 16px 16px'}}>
-            <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'10px'}}>Leave your tags</div>
+            <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'10px'}}>{existingReviewId ? 'Your review' : 'Leave your tags'}</div>
             <div>{tags.map(tag => (<span key={tag.id} onClick={() => toggleTag(tag.label)} style={{display:'inline-block',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:selectedTags.includes(tag.label)?'1.5px solid #8B6FAD':'1.5px solid #DDD6CC',color:selectedTags.includes(tag.label)?'#3D2B4F':'#5A534E',background:selectedTags.includes(tag.label)?'#E8E0F5':'#F7F3EE',margin:'3px',cursor:'pointer'}}>{tag.label}</span>))}</div>
           </div>
 
@@ -197,7 +213,7 @@ export default function RestaurantPage() {
 
           <div style={{padding:'0 16px'}}>
             <button onClick={handleSubmit} disabled={loading} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'15px',fontWeight:'500',cursor:'pointer'}}>
-              {loading ? 'Saving...' : 'Save review →'}
+              {loading ? 'Saving...' : existingReviewId ? 'Update review →' : 'Save review →'}
             </button>
           </div>
         </>
