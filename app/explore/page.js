@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
+import Map, { Marker, Popup, NavigationControl } from 'react-map-gl/mapbox'
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 export default function ExplorePage() {
   const [user, setUser] = useState(null)
@@ -19,15 +22,10 @@ export default function ExplorePage() {
   const [selectedNeighbourhood, setSelectedNeighbourhood] = useState(null)
   const [selectedPrice, setSelectedPrice] = useState(null)
   const [inspirationPick, setInspirationPick] = useState(null)
+  const [viewMode, setViewMode] = useState('list')
+  const [mapPick, setMapPick] = useState(null)
+  const [viewport, setViewport] = useState({ longitude: -0.118, latitude: 51.509, zoom: 11.5 })
   const supabase = createClient()
-
-  function pickInspiration() {
-    const pool = (filtered.length > 0 ? filtered : restaurants)
-    if (pool.length === 0) return
-    const available = inspirationPick ? pool.filter(r => r.id !== inspirationPick.id) : pool
-    const pick = available[Math.floor(Math.random() * available.length)]
-    setInspirationPick(pick)
-  }
 
   const filters = [
     { label: 'All', value: 'all' },
@@ -87,6 +85,7 @@ export default function ExplorePage() {
     if (selectedNeighbourhood) results = results.filter(r => r.neighbourhood === selectedNeighbourhood)
     if (selectedPrice) results = results.filter(r => r.price_range === selectedPrice)
     setFiltered(results)
+    setMapPick(null)
   }, [query, activeFilter, restaurants, tagMap, selectedCuisine, selectedNeighbourhood, selectedPrice])
 
   const activeFilterCount = [selectedCuisine, selectedNeighbourhood, selectedPrice].filter(Boolean).length
@@ -96,6 +95,16 @@ export default function ExplorePage() {
     setSelectedNeighbourhood(null)
     setSelectedPrice(null)
   }
+
+  function pickInspiration() {
+    const pool = (filtered.length > 0 ? filtered : restaurants)
+    if (pool.length === 0) return
+    const available = inspirationPick ? pool.filter(r => r.id !== inspirationPick.id) : pool
+    const pick = available[Math.floor(Math.random() * available.length)]
+    setInspirationPick(pick)
+  }
+
+  const mapRestaurants = filtered.filter(r => r.latitude && r.longitude)
 
   return (
     <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom: user ? '80px' : '80px'}}>
@@ -115,14 +124,14 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      <div style={{padding:'12px 16px'}}>
+      <div style={{padding:'12px 16px 8px'}}>
         <div style={{display:'flex',alignItems:'center',gap:'10px',background:'white',borderRadius:'12px',padding:'10px 14px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)'}}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9A928A" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search restaurants, cuisines, areas..." style={{flex:1,border:'none',outline:'none',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',background:'transparent'}} />
         </div>
       </div>
 
-      <div style={{display:'flex',gap:'8px',padding:'0 16px 12px',overflowX:'auto',scrollbarWidth:'none'}}>
+      <div style={{display:'flex',gap:'8px',padding:'0 16px 8px',overflowX:'auto',scrollbarWidth:'none'}}>
         {filters.map(f => (
           <button key={f.value} onClick={() => setActiveFilter(f.value)} style={{whiteSpace:'nowrap',fontSize:'12px',padding:'6px 14px',borderRadius:'20px',border:activeFilter===f.value?'1.5px solid #8B6FAD':'1.5px solid #DDD6CC',background:activeFilter===f.value?'#E8E0F5':'#F7F3EE',color:activeFilter===f.value?'#3D2B4F':'#5A534E',fontWeight:activeFilter===f.value?'500':'400',cursor:'pointer',flexShrink:0,fontFamily:'sans-serif'}}>{f.label}</button>
         ))}
@@ -138,33 +147,91 @@ export default function ExplorePage() {
       )}
 
       <div style={{padding:'0 16px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <button onClick={pickInspiration} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500',boxShadow:'0 2px 8px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',gap:'6px'}}>
-          <span>✦</span> Inspire me
-        </button>
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          <button onClick={pickInspiration} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500',boxShadow:'0 2px 8px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',gap:'6px'}}>
+            <span>✦</span> Inspire me
+          </button>
+          <div style={{display:'flex',background:'white',borderRadius:'20px',border:'1.5px solid #DDD6CC',overflow:'hidden',boxShadow:'0 2px 8px rgba(26,23,20,0.06)'}}>
+            <button onClick={() => setViewMode('list')} style={{padding:'7px 14px',border:'none',background:viewMode==='list'?'#3D2B4F':'transparent',color:viewMode==='list'?'#F7F3EE':'#9A928A',fontSize:'12px',cursor:'pointer',fontFamily:'sans-serif',fontWeight:viewMode==='list'?'500':'400',display:'flex',alignItems:'center',gap:'5px'}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              List
+            </button>
+            <button onClick={() => setViewMode('map')} style={{padding:'7px 14px',border:'none',background:viewMode==='map'?'#3D2B4F':'transparent',color:viewMode==='map'?'#F7F3EE':'#9A928A',fontSize:'12px',cursor:'pointer',fontFamily:'sans-serif',fontWeight:viewMode==='map'?'500':'400',display:'flex',alignItems:'center',gap:'5px'}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+              Map
+            </button>
+          </div>
+        </div>
         {user && (
           <button onClick={() => window.location.href='/add'} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',border:'none',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500'}}>+ Add restaurant</button>
         )}
       </div>
 
-      <div style={{padding:'0 16px'}}>
-        {loading ? (
-          <div style={{padding:'40px',textAlign:'center',color:'#9A928A',fontSize:'14px'}}>Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{padding:'40px',textAlign:'center',color:'#9A928A',fontSize:'14px'}}>No restaurants found</div>
-        ) : (
-          filtered.map(r => (
-            <div key={r.id} onClick={() => window.location.href='/restaurant/'+r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
-              <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{r.name}</div>
-              <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
-              {tagMap[r.id] && tagMap[r.id].length > 0 && (
-                <div>{tagMap[r.id].map(tag => (
-                  <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
-                ))}</div>
-              )}
+      {viewMode === 'list' ? (
+        <div style={{padding:'0 16px'}}>
+          {loading ? (
+            <div style={{padding:'40px',textAlign:'center',color:'#9A928A',fontSize:'14px'}}>Loading...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{padding:'40px',textAlign:'center',color:'#9A928A',fontSize:'14px'}}>No restaurants found</div>
+          ) : (
+            filtered.map(r => (
+              <div key={r.id} onClick={() => window.location.href='/restaurant/'+r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
+                <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{r.name}</div>
+                <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
+                {tagMap[r.id] && tagMap[r.id].length > 0 && (
+                  <div>{tagMap[r.id].map(tag => (
+                    <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                  ))}</div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div style={{position:'relative',height:'calc(100vh - 280px)',minHeight:'400px',margin:'0 16px',borderRadius:'16px',overflow:'hidden',boxShadow:'0 2px 12px rgba(26,23,20,0.1)'}}>
+          {!loading && (
+            <Map
+              mapboxAccessToken={MAPBOX_TOKEN}
+              initialViewState={viewport}
+              style={{width:'100%',height:'100%'}}
+              mapStyle="mapbox://styles/mapbox/light-v11"
+              onClick={() => setMapPick(null)}
+            >
+              <NavigationControl position="top-right" />
+              {mapRestaurants.map(r => (
+                <Marker
+                  key={r.id}
+                  longitude={r.longitude}
+                  latitude={r.latitude}
+                  anchor="bottom"
+                  onClick={e => { e.originalEvent.stopPropagation(); setMapPick(r) }}
+                >
+                  <div style={{width:'10px',height:'10px',borderRadius:'50%',background: mapPick?.id === r.id ? '#3D2B4F' : '#8B6FAD',border:'2px solid white',boxShadow:'0 1px 4px rgba(0,0,0,0.3)',cursor:'pointer',transform: mapPick?.id === r.id ? 'scale(1.5)' : 'scale(1)',transition:'transform 0.15s ease'}}></div>
+                </Marker>
+              ))}
+            </Map>
+          )}
+
+          {mapPick && (
+            <div style={{position:'absolute',bottom:0,left:0,right:0,background:'#F7F3EE',borderRadius:'16px 16px 0 0',padding:'16px',boxShadow:'0 -4px 24px rgba(26,23,20,0.15)'}}>
+              <div style={{width:'32px',height:'3px',borderRadius:'2px',background:'#DDD6CC',margin:'0 auto 12px'}}></div>
+              <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'12px',marginBottom:'12px'}}>
+                <div style={{flex:1,cursor:'pointer'}} onClick={() => window.location.href='/restaurant/'+mapPick.id}>
+                  <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{mapPick.name}</div>
+                  <div style={{fontSize:'12px',color:'#9A928A',marginBottom:tagMap[mapPick.id]?.length>0?'8px':'0'}}>{mapPick.cuisine} · {mapPick.neighbourhood} · {'£'.repeat(mapPick.price_range)}</div>
+                  {tagMap[mapPick.id] && tagMap[mapPick.id].length > 0 && (
+                    <div>{tagMap[mapPick.id].map(tag => (
+                      <span key={tag} style={{display:'inline-block',fontSize:'11px',padding:'3px 8px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                    ))}</div>
+                  )}
+                </div>
+                <button onClick={() => setMapPick(null)} style={{background:'none',border:'none',cursor:'pointer',color:'#9A928A',fontSize:'18px',lineHeight:1,padding:'2px',flexShrink:0}}>×</button>
+              </div>
+              <button onClick={() => window.location.href='/restaurant/'+mapPick.id} style={{width:'100%',padding:'12px',borderRadius:'12px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',fontWeight:'500',cursor:'pointer',fontFamily:'sans-serif'}}>View restaurant →</button>
             </div>
-          ))
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {user ? (
         <NavBar active="explore" />
@@ -185,7 +252,7 @@ export default function ExplorePage() {
             <div style={{margin:'0 16px 16px',background:'linear-gradient(135deg,#3D2B4F,#6B4E8A)',borderRadius:'16px',padding:'24px',color:'#F7F3EE'}}>
               <div style={{fontSize:'11px',opacity:0.6,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'8px'}}>Tonight's pick</div>
               <div style={{fontFamily:'Georgia,serif',fontSize:'26px',fontStyle:'italic',marginBottom:'4px'}}>{inspirationPick.name}</div>
-              <div style={{fontSize:'13px',opacity:0.7,marginBottom: tagMap[inspirationPick.id]?.length > 0 ? '12px' : '0'}}>{inspirationPick.cuisine} · {inspirationPick.neighbourhood} · {'£'.repeat(inspirationPick.price_range)}</div>
+              <div style={{fontSize:'13px',opacity:0.7,marginBottom:tagMap[inspirationPick.id]?.length>0?'12px':'0'}}>{inspirationPick.cuisine} · {inspirationPick.neighbourhood} · {'£'.repeat(inspirationPick.price_range)}</div>
               {tagMap[inspirationPick.id] && tagMap[inspirationPick.id].length > 0 && (
                 <div>{tagMap[inspirationPick.id].slice(0,3).map(tag => (
                   <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'rgba(255,255,255,0.15)',color:'#F7F3EE',margin:'2px'}}>{tag}</span>

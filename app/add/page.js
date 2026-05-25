@@ -10,6 +10,7 @@ export default function AddRestaurantPage() {
   const [neighbourhood, setNeighbourhood] = useState('')
   const [area, setArea] = useState('')
   const [priceRange, setPriceRange] = useState(null)
+  const [coordinates, setCoordinates] = useState(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(null)
@@ -65,6 +66,9 @@ export default function AddRestaurantPage() {
         if (hood) setNeighbourhood(hood.long_name)
         if (a) setArea(a.long_name)
         if (data.result.price_level) setPriceRange(data.result.price_level)
+        if (data.result.geometry?.location) {
+          setCoordinates({ lat: data.result.geometry.location.lat, lng: data.result.geometry.location.lng })
+        }
       }
     } catch (e) {
       console.error('Place details error:', e)
@@ -90,6 +94,8 @@ export default function AddRestaurantPage() {
       is_chain: false,
       status: 'pending',
       submitted_by: user.id,
+      latitude: coordinates?.lat || null,
+      longitude: coordinates?.lng || null,
     })
 
     if (error) { setError(error.message); setLoading(false); return }
