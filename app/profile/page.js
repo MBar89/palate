@@ -227,10 +227,13 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div style={{padding:'0 16px 16px'}}>
+      <div style={{padding:'0 16px 8px'}}>
         <button onClick={generateInvite} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',fontSize:'15px',fontWeight:'500',cursor:'pointer',boxShadow:'0 2px 12px rgba(26,23,20,0.06)'}}>
           {inviteCopied ? 'Link copied!' : 'Share invite link ↗'}
         </button>
+      </div>
+      <div style={{padding:'0 16px 16px'}}>
+        <a href="mailto:myles@barhamaviation.co.uk?subject=Palate feedback&body=What do you think%3F What's missing%3F" style={{display:'block',width:'100%',padding:'14px',borderRadius:'14px',background:'white',color:'#9A928A',border:'1.5px solid #DDD6CC',fontSize:'14px',fontWeight:'400',cursor:'pointer',boxShadow:'0 2px 12px rgba(26,23,20,0.06)',textAlign:'center',textDecoration:'none',boxSizing:'border-box'}}>Send feedback ↗</a>
       </div>
 
       <NavBar active="profile" />
