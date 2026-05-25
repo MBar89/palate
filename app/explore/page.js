@@ -32,7 +32,6 @@ export default function ExplorePage() {
     { label: 'Independents', value: 'independent' },
     { label: 'Special occasion', value: 'special' },
     { label: 'Neighbourhood gem', value: 'neighbourhood' },
-    { label: 'Natural wine', value: 'wine' },
   ]
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export default function ExplorePage() {
     if (activeFilter === 'independent') results = results.filter(r => !r.is_chain)
     if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).includes('special occasion'))
     if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).includes('neighbourhood gem'))
-    if (activeFilter === 'wine') results = results.filter(r => (tagMap[r.id] || []).includes('natural wine list'))
+
     if (selectedCuisine) results = results.filter(r => r.cuisine === selectedCuisine)
     if (selectedNeighbourhood) results = results.filter(r => r.neighbourhood === selectedNeighbourhood)
     if (selectedPrice) results = results.filter(r => r.price_range === selectedPrice)
