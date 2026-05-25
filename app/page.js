@@ -31,6 +31,7 @@ function LandingPage() {
         <h2 style={{fontFamily:'Georgia,serif',fontSize:'40px',color:'#F7F3EE',fontStyle:'italic',lineHeight:'1.2',marginBottom:'16px'}}>Restaurants people like you love</h2>
         <p style={{fontSize:'16px',color:'#F7F3EE',lineHeight:'1.6',marginBottom:'40px',opacity:0.7}}>Not star averages from strangers. Recommendations from people who eat exactly like you.</p>
         <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer',marginBottom:'12px'}}>Get started — it is free</button>
+        <button onClick={() => window.location.href='/explore'} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'transparent',color:'#F7F3EE',border:'1.5px solid rgba(247,243,238,0.3)',fontSize:'15px',fontWeight:'400',cursor:'pointer',marginBottom:'16px'}}>Browse restaurants first →</button>
         <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.4}}>London restaurants · taste-matched recommendations</p>
       </div>
       <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto'}}>

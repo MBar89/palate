@@ -5,6 +5,7 @@ import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 
 export default function ExplorePage() {
+  const [user, setUser] = useState(null)
   const [restaurants, setRestaurants] = useState([])
   const [filtered, setFiltered] = useState([])
   const [query, setQuery] = useState('')
@@ -30,7 +31,7 @@ export default function ExplorePage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
+      setUser(user)
 
       const { data: r } = await supabase.from('restaurants').select('*').eq('status', 'approved').order('name')
       setRestaurants(r || [])
@@ -88,16 +89,23 @@ export default function ExplorePage() {
   }
 
   return (
-    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom:'80px'}}>
+    <main style={{minHeight:'100vh',background:'#F7F3EE',fontFamily:'sans-serif',paddingBottom: user ? '80px' : '80px'}}>
       <div style={{background:'#3D2B4F',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <h1 style={{fontFamily:'Georgia,serif',fontSize:'28px',color:'#F7F3EE',fontStyle:'italic',margin:0}}>palate</h1>
-        <button onClick={() => setShowFilterSheet(true)} style={{position:'relative',background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-          Filter
-          {activeFilterCount > 0 && (
-            <span style={{position:'absolute',top:'-6px',right:'-6px',background:'#F7F3EE',color:'#3D2B4F',borderRadius:'50%',width:'16px',height:'16px',fontSize:'10px',fontWeight:'500',display:'flex',alignItems:'center',justifyContent:'center'}}>{activeFilterCount}</span>
-          )}
-        </button>
+        {user ? (
+          <button onClick={() => setShowFilterSheet(true)} style={{position:'relative',background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            Filter
+            {activeFilterCount > 0 && (
+              <span style={{position:'absolute',top:'-6px',right:'-6px',background:'#F7F3EE',color:'#3D2B4F',borderRadius:'50%',width:'16px',height:'16px',fontSize:'10px',fontWeight:'500',display:'flex',alignItems:'center',justifyContent:'center'}}>{activeFilterCount}</span>
+            )}
+          </button>
+        ) : (
+          <div style={{display:'flex',gap:'8px'}}>
+            <button onClick={() => window.location.href='/login'} style={{background:'transparent',border:'1.5px solid rgba(247,243,238,0.4)',color:'#F7F3EE',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',cursor:'pointer'}}>Log in</button>
+            <button onClick={() => window.location.href='/signup'} style={{background:'#F7F3EE',border:'none',color:'#3D2B4F',borderRadius:'8px',padding:'6px 14px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Sign up</button>
+          </div>
+        )}
       </div>
 
       <div style={{padding:'12px 16px'}}>
@@ -122,9 +130,11 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <div style={{padding:'0 16px 12px',display:'flex',justifyContent:'flex-end'}}>
-        <button onClick={() => window.location.href='/add'} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',border:'none',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500'}}>+ Add restaurant</button>
-      </div>
+      {user && (
+        <div style={{padding:'0 16px 12px',display:'flex',justifyContent:'flex-end'}}>
+          <button onClick={() => window.location.href='/add'} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',border:'none',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500'}}>+ Add restaurant</button>
+        </div>
+      )}
 
       <div style={{padding:'0 16px'}}>
         {loading ? (
@@ -146,9 +156,18 @@ export default function ExplorePage() {
         )}
       </div>
 
-      <NavBar active="explore" />
+      {user ? (
+        <NavBar active="explore" />
+      ) : (
+        <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#3D2B4F',padding:'14px 24px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
+          <div>
+            <div style={{fontSize:'13px',fontWeight:'500',color:'#F7F3EE',marginBottom:'2px'}}>Like what you see?</div>
+            <div style={{fontSize:'12px',color:'#F7F3EE',opacity:0.6}}>Sign up for taste-matched recommendations</div>
+          </div>
+          <button onClick={() => window.location.href='/signup'} style={{background:'#F7F3EE',border:'none',color:'#3D2B4F',borderRadius:'10px',padding:'10px 18px',fontSize:'13px',fontWeight:'500',cursor:'pointer',flexShrink:0}}>Sign up free →</button>
+        </div>
+      )}
 
-      {/* FILTER SHEET */}
       {showFilterSheet && (
         <div onClick={(e) => { if(e.target === e.currentTarget) setShowFilterSheet(false) }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(26,23,20,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>
           <div style={{background:'#F7F3EE',borderRadius:'24px 24px 0 0',padding:'0 0 32px',width:'100%',maxHeight:'80vh',overflowY:'auto'}}>
@@ -157,7 +176,6 @@ export default function ExplorePage() {
               <h2 style={{fontFamily:'Georgia,serif',fontSize:'20px',color:'#1A1714',fontStyle:'italic',margin:0}}>Filter</h2>
               {activeFilterCount > 0 && <span onClick={clearFilters} style={{fontSize:'13px',color:'#3D2B4F',cursor:'pointer',fontWeight:'500'}}>Clear all</span>}
             </div>
-
             <div style={{padding:'0 24px 20px',borderBottom:'1px solid #EDE8E1'}}>
               <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'12px'}}>Cuisine</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
@@ -166,7 +184,6 @@ export default function ExplorePage() {
                 ))}
               </div>
             </div>
-
             <div style={{padding:'20px 24px 20px',borderBottom:'1px solid #EDE8E1'}}>
               <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'12px'}}>Neighbourhood</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
@@ -175,7 +192,6 @@ export default function ExplorePage() {
                 ))}
               </div>
             </div>
-
             <div style={{padding:'20px 24px 20px'}}>
               <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'12px'}}>Price range</div>
               <div style={{display:'flex',gap:'8px'}}>
@@ -184,7 +200,6 @@ export default function ExplorePage() {
                 ))}
               </div>
             </div>
-
             <div style={{padding:'0 24px'}}>
               <button onClick={() => setShowFilterSheet(false)} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'15px',fontWeight:'500',cursor:'pointer'}}>
                 Show {filtered.length} result{filtered.length !== 1 ? 's' : ''}
