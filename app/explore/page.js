@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl/mapbox'
@@ -26,6 +27,8 @@ export default function ExplorePage() {
   const [mapPick, setMapPick] = useState(null)
   const [viewport, setViewport] = useState({ longitude: -0.118, latitude: 51.509, zoom: 11.5 })
   const [trendingIds, setTrendingIds] = useState(new Set())
+  const searchParams = useSearchParams()
+  const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || null)
   const supabase = createClient()
 
   const filters = [
@@ -87,12 +90,13 @@ export default function ExplorePage() {
     if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).includes('special occasion'))
     if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).includes('neighbourhood gem'))
 
+    if (selectedTag) results = results.filter(r => (tagMap[r.id] || []).includes(selectedTag))
     if (selectedCuisine) results = results.filter(r => r.cuisine === selectedCuisine)
     if (selectedNeighbourhood) results = results.filter(r => r.neighbourhood === selectedNeighbourhood)
     if (selectedPrice) results = results.filter(r => r.price_range === selectedPrice)
     setFiltered(results)
     setMapPick(null)
-  }, [query, activeFilter, restaurants, tagMap, selectedCuisine, selectedNeighbourhood, selectedPrice])
+  }, [query, activeFilter, restaurants, tagMap, selectedCuisine, selectedNeighbourhood, selectedPrice, selectedTag, trendingIds])
 
   const activeFilterCount = [selectedCuisine, selectedNeighbourhood, selectedPrice].filter(Boolean).length
 
@@ -143,12 +147,13 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      {activeFilterCount > 0 && (
+      {(activeFilterCount > 0 || selectedTag) && (
         <div style={{padding:'0 16px 8px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+          {selectedTag && <span style={{fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'#8B6FAD',color:'#F7F3EE',display:'flex',alignItems:'center',gap:'6px'}}>{selectedTag} <span onClick={() => setSelectedTag(null)} style={{cursor:'pointer',opacity:0.7}}>×</span></span>}
           {selectedCuisine && <span style={{fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',display:'flex',alignItems:'center',gap:'6px'}}>{selectedCuisine} <span onClick={() => setSelectedCuisine(null)} style={{cursor:'pointer',opacity:0.7}}>×</span></span>}
           {selectedNeighbourhood && <span style={{fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',display:'flex',alignItems:'center',gap:'6px'}}>{selectedNeighbourhood} <span onClick={() => setSelectedNeighbourhood(null)} style={{cursor:'pointer',opacity:0.7}}>×</span></span>}
           {selectedPrice && <span style={{fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',display:'flex',alignItems:'center',gap:'6px'}}>{'£'.repeat(selectedPrice)} <span onClick={() => setSelectedPrice(null)} style={{cursor:'pointer',opacity:0.7}}>×</span></span>}
-          <span onClick={clearFilters} style={{fontSize:'12px',color:'#9A928A',cursor:'pointer',textDecoration:'underline'}}>Clear all</span>
+          <span onClick={() => { clearFilters(); setSelectedTag(null) }} style={{fontSize:'12px',color:'#9A928A',cursor:'pointer',textDecoration:'underline'}}>Clear all</span>
         </div>
       )}
 
