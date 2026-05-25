@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 
@@ -11,6 +11,10 @@ export default function AddRestaurantPage() {
   const [area, setArea] = useState('')
   const [priceRange, setPriceRange] = useState(null)
   const [coordinates, setCoordinates] = useState(null)
+  const [phone, setPhone] = useState(null)
+  const [website, setWebsite] = useState(null)
+  const [address, setAddress] = useState(null)
+  const [openingHours, setOpeningHours] = useState(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(null)
@@ -69,6 +73,10 @@ export default function AddRestaurantPage() {
         if (data.result.geometry?.location) {
           setCoordinates({ lat: data.result.geometry.location.lat, lng: data.result.geometry.location.lng })
         }
+        if (data.result.formatted_phone_number) setPhone(data.result.formatted_phone_number)
+        if (data.result.website) setWebsite(data.result.website)
+        if (data.result.formatted_address) setAddress(data.result.formatted_address)
+        if (data.result.opening_hours?.weekday_text) setOpeningHours(data.result.opening_hours.weekday_text)
       }
     } catch (e) {
       console.error('Place details error:', e)
@@ -96,6 +104,11 @@ export default function AddRestaurantPage() {
       submitted_by: user.id,
       latitude: coordinates?.lat || null,
       longitude: coordinates?.lng || null,
+      place_id: placeId || null,
+      phone: phone || null,
+      website: website || null,
+      address: address || null,
+      opening_hours: openingHours || null,
     })
 
     if (error) { setError(error.message); setLoading(false); return }

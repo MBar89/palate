@@ -122,6 +122,39 @@ export default function RestaurantPage() {
         )}
       </div>
 
+      {(restaurant.address || restaurant.phone || restaurant.website || restaurant.opening_hours) && (
+        <div style={{margin:'0 16px 16px',background:'white',borderRadius:'16px',padding:'16px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)'}}>
+          {restaurant.address && (
+            <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant.address)}`} target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'flex-start',gap:'10px',textDecoration:'none',marginBottom:restaurant.phone||restaurant.website||restaurant.opening_hours?'12px':'0'}}>
+              <span style={{fontSize:'16px',flexShrink:0,marginTop:'1px'}}>📍</span>
+              <span style={{fontSize:'13px',color:'#3D2B4F',lineHeight:'1.4'}}>{restaurant.address}</span>
+            </a>
+          )}
+          {restaurant.phone && (
+            <a href={`tel:${restaurant.phone}`} style={{display:'flex',alignItems:'center',gap:'10px',textDecoration:'none',marginBottom:restaurant.website||restaurant.opening_hours?'12px':'0'}}>
+              <span style={{fontSize:'16px',flexShrink:0}}>📞</span>
+              <span style={{fontSize:'13px',color:'#3D2B4F'}}>{restaurant.phone}</span>
+            </a>
+          )}
+          {restaurant.website && (
+            <a href={restaurant.website} target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center',gap:'10px',textDecoration:'none',marginBottom:restaurant.opening_hours?'12px':'0'}}>
+              <span style={{fontSize:'16px',flexShrink:0}}>🌐</span>
+              <span style={{fontSize:'13px',color:'#3D2B4F',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{restaurant.website.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'')}</span>
+            </a>
+          )}
+          {restaurant.opening_hours && (
+            <div style={{display:'flex',alignItems:'flex-start',gap:'10px'}}>
+              <span style={{fontSize:'16px',flexShrink:0,marginTop:'1px'}}>🕐</span>
+              <div>
+                {restaurant.opening_hours.map((line, i) => (
+                  <div key={i} style={{fontSize:'12px',color:'#5A534E',lineHeight:'1.7'}}>{line}</div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {existingTags.length > 0 && (
         <div style={{padding:'0 16px 16px'}}>
           <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'8px'}}>What people say</div>
