@@ -68,6 +68,7 @@ export default function HomePage() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [isLoggedOut, setIsLoggedOut] = useState(false)
   const [inspirationPick, setInspirationPick] = useState(null)
+  const [trendingIds, setTrendingIds] = useState(new Set())
   const supabase = createClient()
 
   useEffect(() => {
@@ -81,14 +82,21 @@ export default function HomePage() {
       setUser(user)
       const { data: ratings } = await supabase.from('calibration_ratings').select('id').eq('user_id', user.id).limit(1)
       if (!ratings || ratings.length === 0) { window.location.href = '/calibration'; return }
-      const [{ data: feed }, { data: saves }, { data: friends }] = await Promise.all([
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const [{ data: feed }, { data: saves }, { data: friends }, { data: recent }] = await Promise.all([
         supabase.rpc('get_personalised_feed', { user_uuid: user.id }),
         supabase.from('saves').select('restaurant_id').eq('user_id', user.id),
         supabase.rpc('get_friend_activity', { user_uuid: user.id }),
+        supabase.from('reviews').select('restaurant_id').gte('created_at', thirtyDaysAgo),
       ])
       if (feed) setRestaurants(feed)
       if (saves) setSavedIds(new Set(saves.map(s => s.restaurant_id)))
       if (friends) setFriendActivity(friends)
+      if (recent) {
+        const counts = {}
+        recent.forEach(r => { counts[r.restaurant_id] = (counts[r.restaurant_id] || 0) + 1 })
+        setTrendingIds(new Set(Object.entries(counts).filter(([,c]) => c >= 2).map(([id]) => id)))
+      }
       setLoading(false)
     }
     load()
@@ -186,7 +194,10 @@ export default function HomePage() {
             <div style={{height:'3px',background:'#DDD6CC',borderRadius:'2px',overflow:'hidden',marginBottom:'8px'}}>
               <div style={{height:'100%',background:'linear-gradient(90deg,#8B6FAD,#3D2B4F)',borderRadius:'2px',width:r.match_score+'%'}}></div>
             </div>
-            {r.top_tags && r.top_tags.length > 0 && <div>{r.top_tags.map(tag => (<span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>))}</div>}
+            <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'4px'}}>
+              {trendingIds.has(String(r.id)) && <span style={{display:'inline-flex',alignItems:'center',gap:'3px',fontSize:'11px',fontWeight:'500',padding:'3px 8px',borderRadius:'20px',background:'#FEF3E2',border:'1.5px solid #C47A2A',color:'#7A4A10'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C47A2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Trending</span>}
+              {r.top_tags && r.top_tags.map(tag => (<span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>))}
+            </div>
           </div>
         ))}
       </div>

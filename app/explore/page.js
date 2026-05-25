@@ -25,6 +25,7 @@ export default function ExplorePage() {
   const [viewMode, setViewMode] = useState('list')
   const [mapPick, setMapPick] = useState(null)
   const [viewport, setViewport] = useState({ longitude: -0.118, latitude: 51.509, zoom: 11.5 })
+  const [trendingIds, setTrendingIds] = useState(new Set())
   const supabase = createClient()
 
   const filters = [
@@ -48,18 +49,22 @@ export default function ExplorePage() {
       setCuisines(uniqueCuisines)
       setNeighbourhoods(uniqueNeighbourhoods)
 
-      const { data: reviews } = await supabase.from('reviews').select('restaurant_id, tags')
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: reviews } = await supabase.from('reviews').select('restaurant_id, tags, created_at')
       if (reviews) {
         const map = {}
+        const counts = {}
         reviews.forEach(rev => {
           if (!map[rev.restaurant_id]) map[rev.restaurant_id] = {}
           if (rev.tags) rev.tags.forEach(tag => { map[rev.restaurant_id][tag] = (map[rev.restaurant_id][tag] || 0) + 1 })
+          if (rev.created_at >= thirtyDaysAgo) counts[rev.restaurant_id] = (counts[rev.restaurant_id] || 0) + 1
         })
         const topTags = {}
         Object.keys(map).forEach(rid => {
           topTags[rid] = Object.entries(map[rid]).sort((a,b) => b[1]-a[1]).slice(0,3).map(([t]) => t)
         })
         setTagMap(topTags)
+        setTrendingIds(new Set(Object.entries(counts).filter(([,c]) => c >= 2).map(([id]) => id)))
       }
       setLoading(false)
     }
@@ -177,11 +182,12 @@ export default function ExplorePage() {
               <div key={r.id} onClick={() => window.location.href='/restaurant/'+r.id} style={{background:'white',borderRadius:'16px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 12px rgba(26,23,20,0.07)',cursor:'pointer'}}>
                 <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{r.name}</div>
                 <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
-                {tagMap[r.id] && tagMap[r.id].length > 0 && (
-                  <div>{tagMap[r.id].map(tag => (
+                <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'4px'}}>
+                  {trendingIds.has(String(r.id)) && <span style={{display:'inline-flex',alignItems:'center',gap:'3px',fontSize:'11px',fontWeight:'500',padding:'3px 8px',borderRadius:'20px',background:'#FEF3E2',border:'1.5px solid #C47A2A',color:'#7A4A10'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C47A2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Trending</span>}
+                  {tagMap[r.id] && tagMap[r.id].map(tag => (
                     <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
-                  ))}</div>
-                )}
+                  ))}
+                </div>
               </div>
             ))
           )}
