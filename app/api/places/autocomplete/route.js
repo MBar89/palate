@@ -1,4 +1,11 @@
+import { createClient } from '@supabase/supabase-js'
+
 export async function GET(request) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return Response.json({ predictions: [] }, { status: 401 })
+  const { data: { user } } = await createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY).auth.getUser(token)
+  if (!user) return Response.json({ predictions: [] }, { status: 401 })
+
   const { searchParams } = new URL(request.url)
   const input = searchParams.get('input')
 

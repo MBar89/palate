@@ -25,12 +25,18 @@ export default function AddRestaurantPage() {
   const duplicateTimeout = useRef(null)
   const supabase = createClient()
 
+  async function getToken() {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token || ''
+  }
+
   async function searchPlaces(query) {
     if (!query || query.length < 3) { setSuggestions([]); return }
     clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(query)}`)
+        const token = await getToken()
+        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(query)}`, { headers: { Authorization: `Bearer ${token}` } })
         const data = await res.json()
         if (data.predictions) setSuggestions(data.predictions.slice(0, 5))
       } catch (e) {
@@ -61,7 +67,8 @@ export default function AddRestaurantPage() {
     checkDuplicate(placeName)
 
     try {
-      const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`)
+      const token = await getToken()
+      const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`, { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json()
       if (data.result) {
         const components = data.result.address_components || []
