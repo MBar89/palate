@@ -94,9 +94,18 @@ export default function ProfilePage() {
 
   async function generateInvite() {
     const code = Math.random().toString(36).substring(2, 10)
-    await supabase.from('invites').insert({ code, created_by: user.id })
+    const { error } = await supabase.from('invites').insert({ code, created_by: user.id })
+    if (error) { alert('Could not generate invite: ' + error.message); return }
     const link = window.location.origin + '/invite/' + code
-    await navigator.clipboard.writeText(link)
+    if (navigator.share) {
+      navigator.share({ title: 'Join me on palate', text: 'I think you would love this — taste-matched restaurant recommendations.', url: link }).catch(() => {})
+    } else {
+      try {
+        await navigator.clipboard.writeText(link)
+      } catch {
+        prompt('Copy your invite link:', link)
+      }
+    }
     setInviteCopied(true)
     setTimeout(() => setInviteCopied(false), 3000)
   }
