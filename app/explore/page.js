@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl/mapbox'
@@ -27,8 +26,8 @@ export default function ExplorePage() {
   const [mapPick, setMapPick] = useState(null)
   const [viewport, setViewport] = useState({ longitude: -0.118, latitude: 51.509, zoom: 11.5 })
   const [trendingIds, setTrendingIds] = useState(new Set())
-  const searchParams = useSearchParams()
-  const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || null)
+  const [selectedTag, setSelectedTag] = useState(null)
+  const [allTagMap, setAllTagMap] = useState({})
   const supabase = createClient()
 
   const filters = [
@@ -57,19 +56,29 @@ export default function ExplorePage() {
       const { data: reviews } = await supabase.from('reviews').select('restaurant_id, tags, created_at')
       if (reviews) {
         const map = {}
+        const allMap = {}
         const counts = {}
         reviews.forEach(rev => {
           if (!map[rev.restaurant_id]) map[rev.restaurant_id] = {}
-          if (rev.tags) rev.tags.forEach(tag => { map[rev.restaurant_id][tag] = (map[rev.restaurant_id][tag] || 0) + 1 })
+          if (!allMap[rev.restaurant_id]) allMap[rev.restaurant_id] = new Set()
+          if (rev.tags) rev.tags.forEach(tag => {
+            map[rev.restaurant_id][tag] = (map[rev.restaurant_id][tag] || 0) + 1
+            allMap[rev.restaurant_id].add(tag)
+          })
           if (rev.created_at >= thirtyDaysAgo) counts[rev.restaurant_id] = (counts[rev.restaurant_id] || 0) + 1
         })
         const topTags = {}
+        const allTags = {}
         Object.keys(map).forEach(rid => {
           topTags[rid] = Object.entries(map[rid]).sort((a,b) => b[1]-a[1]).slice(0,3).map(([t]) => t)
+          allTags[rid] = [...allMap[rid]]
         })
         setTagMap(topTags)
+        setAllTagMap(allTags)
         setTrendingIds(new Set(Object.entries(counts).filter(([,c]) => c >= 2).map(([id]) => id)))
       }
+      const tagParam = new URLSearchParams(window.location.search).get('tag')
+      if (tagParam) setSelectedTag(tagParam)
       setLoading(false)
     }
     load()
@@ -90,13 +99,13 @@ export default function ExplorePage() {
     if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).includes('special occasion'))
     if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).includes('neighbourhood gem'))
 
-    if (selectedTag) results = results.filter(r => (tagMap[r.id] || []).includes(selectedTag))
+    if (selectedTag) results = results.filter(r => (allTagMap[r.id] || []).includes(selectedTag))
     if (selectedCuisine) results = results.filter(r => r.cuisine === selectedCuisine)
     if (selectedNeighbourhood) results = results.filter(r => r.neighbourhood === selectedNeighbourhood)
     if (selectedPrice) results = results.filter(r => r.price_range === selectedPrice)
     setFiltered(results)
     setMapPick(null)
-  }, [query, activeFilter, restaurants, tagMap, selectedCuisine, selectedNeighbourhood, selectedPrice, selectedTag, trendingIds])
+  }, [query, activeFilter, restaurants, tagMap, allTagMap, selectedCuisine, selectedNeighbourhood, selectedPrice, selectedTag, trendingIds])
 
   const activeFilterCount = [selectedCuisine, selectedNeighbourhood, selectedPrice].filter(Boolean).length
 
