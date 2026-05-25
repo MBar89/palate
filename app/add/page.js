@@ -15,43 +15,61 @@ export default function AddRestaurantPage() {
   const [error, setError] = useState(null)
   const [suggestions, setSuggestions] = useState([])
   const [placeId, setPlaceId] = useState(null)
+  const [duplicate, setDuplicate] = useState(null)
   const searchTimeout = useRef(null)
+  const duplicateTimeout = useRef(null)
   const supabase = createClient()
 
   async function searchPlaces(query) {
-  if (!query || query.length < 3) { setSuggestions([]); return }
-  clearTimeout(searchTimeout.current)
-  searchTimeout.current = setTimeout(async () => {
-    try {
-      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(query)}`)
-      const data = await res.json()
-      if (data.predictions) setSuggestions(data.predictions.slice(0, 5))
-    } catch (e) {
-      console.error('Places error:', e)
-    }
-  }, 300)
-}
+    if (!query || query.length < 3) { setSuggestions([]); return }
+    clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        if (data.predictions) setSuggestions(data.predictions.slice(0, 5))
+      } catch (e) {
+        console.error('Places error:', e)
+      }
+    }, 300)
+  }
+
+  async function checkDuplicate(restaurantName) {
+    if (!restaurantName || restaurantName.length < 3) { setDuplicate(null); return }
+    clearTimeout(duplicateTimeout.current)
+    duplicateTimeout.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from('restaurants')
+        .select('id, name, neighbourhood, status')
+        .ilike('name', restaurantName.trim())
+        .in('status', ['approved', 'pending'])
+        .limit(1)
+      setDuplicate(data && data.length > 0 ? data[0] : null)
+    }, 400)
+  }
 
   async function selectPlace(prediction) {
-  setName(prediction.structured_formatting.main_text)
-  setPlaceId(prediction.place_id)
-  setSuggestions([])
+    const placeName = prediction.structured_formatting.main_text
+    setName(placeName)
+    setPlaceId(prediction.place_id)
+    setSuggestions([])
+    checkDuplicate(placeName)
 
-  try {
-    const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`)
-    const data = await res.json()
-    if (data.result) {
-      const components = data.result.address_components || []
-      const hood = components.find(c => c.types.includes('neighborhood') || c.types.includes('sublocality'))
-      const a = components.find(c => c.types.includes('postal_town') || c.types.includes('locality'))
-      if (hood) setNeighbourhood(hood.long_name)
-      if (a) setArea(a.long_name)
-      if (data.result.price_level) setPriceRange(data.result.price_level)
+    try {
+      const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`)
+      const data = await res.json()
+      if (data.result) {
+        const components = data.result.address_components || []
+        const hood = components.find(c => c.types.includes('neighborhood') || c.types.includes('sublocality'))
+        const a = components.find(c => c.types.includes('postal_town') || c.types.includes('locality'))
+        if (hood) setNeighbourhood(hood.long_name)
+        if (a) setArea(a.long_name)
+        if (data.result.price_level) setPriceRange(data.result.price_level)
+      }
+    } catch (e) {
+      console.error('Place details error:', e)
     }
-  } catch (e) {
-    console.error('Place details error:', e)
   }
-}
 
   async function handleSubmit() {
     if (!name || !cuisine || !neighbourhood || !priceRange) {
@@ -107,9 +125,13 @@ export default function AddRestaurantPage() {
           <label style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:'6px'}}>Restaurant name</label>
           <input
             value={name}
-            onChange={e => { setName(e.target.value); searchPlaces(e.target.value) }}
+            onChange={e => {
+              setName(e.target.value)
+              searchPlaces(e.target.value)
+              checkDuplicate(e.target.value)
+            }}
             placeholder="Search for a restaurant..."
-            style={{width:'100%',padding:'12px 14px',borderRadius:'12px',border:'1.5px solid #DDD6CC',background:'white',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none'}}
+            style={{width:'100%',padding:'12px 14px',borderRadius:'12px',border: duplicate ? '1.5px solid #C47A2A' : '1.5px solid #DDD6CC',background:'white',fontSize:'14px',fontFamily:'sans-serif',color:'#1A1714',outline:'none',boxSizing:'border-box'}}
           />
           {suggestions.length > 0 && (
             <div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',borderRadius:'12px',boxShadow:'0 4px 24px rgba(26,23,20,0.12)',zIndex:10,overflow:'hidden',marginTop:'4px'}}>
@@ -122,6 +144,15 @@ export default function AddRestaurantPage() {
             </div>
           )}
         </div>
+
+        {duplicate && (
+          <div style={{marginBottom:'16px',background:'#FEF3E2',border:'1.5px solid #C47A2A',borderRadius:'12px',padding:'12px 14px'}}>
+            <div style={{fontSize:'13px',fontWeight:'500',color:'#7A4A10',marginBottom:'2px'}}>This restaurant may already exist</div>
+            <div style={{fontSize:'12px',color:'#7A4A10',opacity:0.8}}>
+              {duplicate.name} · {duplicate.neighbourhood} is {duplicate.status === 'pending' ? 'awaiting approval' : 'already in palate'}. Only submit if this is a different restaurant.
+            </div>
+          </div>
+        )}
 
         <div style={{display:'flex',gap:'10px',marginBottom:'16px'}}>
           <div style={{flex:1}}>
