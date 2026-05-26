@@ -171,21 +171,9 @@ export default function ExplorePage() {
       )}
 
       <div style={{padding:'0 16px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-          <button onClick={pickInspiration} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500',boxShadow:'0 2px 8px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',gap:'6px'}}>
-            <span>✦</span> Inspire me
-          </button>
-          <div style={{display:'flex',background:'white',borderRadius:'20px',border:'1.5px solid #DDD6CC',overflow:'hidden',boxShadow:'0 2px 8px rgba(26,23,20,0.06)'}}>
-            <button onClick={() => setViewMode('list')} style={{padding:'7px 14px',border:'none',background:viewMode==='list'?'#3D2B4F':'transparent',color:viewMode==='list'?'#F7F3EE':'#9A928A',fontSize:'12px',cursor:'pointer',fontFamily:'sans-serif',fontWeight:viewMode==='list'?'500':'400',display:'flex',alignItems:'center',gap:'5px'}}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              List
-            </button>
-            <button onClick={() => setViewMode('map')} style={{padding:'7px 14px',border:'none',background:viewMode==='map'?'#3D2B4F':'transparent',color:viewMode==='map'?'#F7F3EE':'#9A928A',fontSize:'12px',cursor:'pointer',fontFamily:'sans-serif',fontWeight:viewMode==='map'?'500':'400',display:'flex',alignItems:'center',gap:'5px'}}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-              Map
-            </button>
-          </div>
-        </div>
+        <button onClick={pickInspiration} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'white',color:'#3D2B4F',border:'1.5px solid #DDD6CC',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500',boxShadow:'0 2px 8px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',gap:'6px'}}>
+          <span>✦</span> Inspire me
+        </button>
         {user && (
           <button onClick={() => window.location.href='/add'} style={{fontSize:'13px',padding:'8px 16px',borderRadius:'20px',background:'#3D2B4F',color:'#F7F3EE',border:'none',cursor:'pointer',fontFamily:'sans-serif',fontWeight:'500'}}>+ Add restaurant</button>
         )}
@@ -218,7 +206,7 @@ export default function ExplorePage() {
           )}
         </div>
       ) : (
-        <div style={{position:'relative',height:'calc(100vh - 280px)',minHeight:'400px',margin:'0 16px',borderRadius:'16px',overflow:'hidden',boxShadow:'0 2px 12px rgba(26,23,20,0.1)'}}>
+        <div style={{position:'relative',height:'calc(100vh - 230px)',minHeight:'400px',overflow:'hidden'}}>
           {!loading && (
             <Map
               mapboxAccessToken={MAPBOX_TOKEN}
@@ -275,6 +263,25 @@ export default function ExplorePage() {
           </div>
           <button onClick={() => window.location.href='/signup'} style={{background:'#F7F3EE',border:'none',color:'#3D2B4F',borderRadius:'10px',padding:'10px 18px',fontSize:'13px',fontWeight:'500',cursor:'pointer',flexShrink:0}}>Sign up free →</button>
         </div>
+      )}
+
+      {!inspirationPick && !showFilterSheet && (
+        <button
+          onClick={() => setViewMode(v => v === 'list' ? 'map' : 'list')}
+          style={{position:'fixed',bottom: user ? '80px' : '96px',left:'50%',transform:'translateX(-50%)',zIndex:40,display:'flex',alignItems:'center',gap:'7px',padding:'11px 22px',borderRadius:'24px',background:'#3D2B4F',color:'#F7F3EE',border:'none',fontSize:'14px',fontWeight:'500',cursor:'pointer',fontFamily:'sans-serif',boxShadow:'0 4px 20px rgba(61,43,79,0.45)',whiteSpace:'nowrap'}}
+        >
+          {viewMode === 'list' ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+              Show map
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              Show list
+            </>
+          )}
+        </button>
       )}
 
       {inspirationPick && (
