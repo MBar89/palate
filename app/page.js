@@ -32,7 +32,7 @@ function LandingPage() {
         <p style={{fontSize:'16px',color:'#F7F3EE',lineHeight:'1.6',marginBottom:'40px',opacity:0.7}}>Not star averages from strangers. Recommendations from people who eat exactly like you.</p>
         <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer',marginBottom:'12px'}}>Get started — it is free</button>
         <button onClick={() => window.location.href='/explore'} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'transparent',color:'#F7F3EE',border:'1.5px solid rgba(247,243,238,0.3)',fontSize:'15px',fontWeight:'400',cursor:'pointer',marginBottom:'16px'}}>Browse restaurants first →</button>
-        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.4}}>London restaurants · taste-matched recommendations</p>
+        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.4}}>667 London restaurants · free to join</p>
       </div>
       {/* How it works */}
       <div style={{padding:'0 24px 48px',maxWidth:'480px',margin:'0 auto'}}>
@@ -77,7 +77,7 @@ function LandingPage() {
 
       {/* Bottom CTA */}
       <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto',textAlign:'center'}}>
-        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.35,marginBottom:'20px'}}>144 London restaurants · Members only</p>
+        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.35,marginBottom:'20px'}}>667 London restaurants · Free to join</p>
         <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer'}}>Find your taste type →</button>
       </div>
     </main>
