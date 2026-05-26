@@ -34,27 +34,51 @@ function LandingPage() {
         <button onClick={() => window.location.href='/explore'} style={{width:'100%',padding:'14px',borderRadius:'14px',background:'transparent',color:'#F7F3EE',border:'1.5px solid rgba(247,243,238,0.3)',fontSize:'15px',fontWeight:'400',cursor:'pointer',marginBottom:'16px'}}>Browse restaurants first →</button>
         <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.4}}>London restaurants · taste-matched recommendations</p>
       </div>
-      <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto'}}>
-        <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
-            <div style={{fontSize:'24px',marginBottom:'8px'}}>✦</div>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Taste-matched feed</div>
-            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>See a match score for every restaurant based on people who eat like you.</div>
-          </div>
-          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
-            <div style={{fontSize:'24px',marginBottom:'8px'}}>🏷</div>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Tag-based reviews</div>
-            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>No essays. Just tags — worth the journey, order the turbot, locals only.</div>
-          </div>
-          <div style={{background:'rgba(255,255,255,0.07)',borderRadius:'16px',padding:'20px'}}>
-            <div style={{fontSize:'24px',marginBottom:'8px'}}>👥</div>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'6px'}}>Follow people like you</div>
-            <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.6}}>Find people with your taste and see what they love.</div>
-          </div>
+      {/* How it works */}
+      <div style={{padding:'0 24px 48px',maxWidth:'480px',margin:'0 auto'}}>
+        <div style={{fontSize:'11px',fontWeight:'500',color:'rgba(247,243,238,0.4)',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'20px',textAlign:'center'}}>How it works</div>
+        <div style={{display:'flex',flexDirection:'column',gap:'0'}}>
+          {[
+            { n:'1', title:'Rate a few restaurants', body:'Tell us what you love and avoid — takes about a minute.' },
+            { n:'2', title:'We find your taste type', body:'Adventurous, fine dining, comfort, or casual. You might be surprised.' },
+            { n:'3', title:'Your feed, matched to you', body:'Every restaurant gets a match score based on people who eat like you.' },
+          ].map(({ n, title, body }, i, arr) => (
+            <div key={n} style={{display:'flex',gap:'16px',paddingBottom: i < arr.length-1 ? '24px' : '0'}}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
+                <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',fontWeight:'600',color:'#F7F3EE'}}>{n}</div>
+                {i < arr.length-1 && <div style={{width:'1px',flex:1,marginTop:'6px',background:'rgba(255,255,255,0.1)'}}></div>}
+              </div>
+              <div style={{paddingTop:'4px'}}>
+                <div style={{fontSize:'15px',fontWeight:'500',color:'#F7F3EE',marginBottom:'4px'}}>{title}</div>
+                <div style={{fontSize:'14px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.55}}>{body}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Taste types */}
+      <div style={{padding:'0 24px 48px',maxWidth:'480px',margin:'0 auto'}}>
+        <div style={{fontSize:'11px',fontWeight:'500',color:'rgba(247,243,238,0.4)',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'16px',textAlign:'center'}}>The four taste types</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+          {[
+            { label:'Adventurous', desc:'Independent gems, experimental menus, off the beaten track.' },
+            { label:'Fine dining', desc:'Exceptional quality, special occasions, refined and elegant.' },
+            { label:'Comfort', desc:'Reliable favourites, familiar chains, good value every time.' },
+            { label:'Casual', desc:'Broad tastes, unpretentious spots, no strong preferences.' },
+          ].map(({ label, desc }) => (
+            <div key={label} style={{background:'rgba(255,255,255,0.07)',borderRadius:'14px',padding:'16px'}}>
+              <div style={{fontSize:'13px',fontWeight:'600',color:'#F7F3EE',marginBottom:'6px'}}>{label}</div>
+              <div style={{fontSize:'12px',color:'#F7F3EE',lineHeight:'1.5',opacity:0.55}}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
       <div style={{padding:'0 24px 64px',maxWidth:'480px',margin:'0 auto',textAlign:'center'}}>
-        <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer'}}>Start discovering →</button>
+        <p style={{fontSize:'13px',color:'#F7F3EE',opacity:0.35,marginBottom:'20px'}}>144 London restaurants · Members only</p>
+        <button onClick={() => window.location.href='/signup'} style={{width:'100%',padding:'16px',borderRadius:'14px',background:'#F7F3EE',color:'#3D2B4F',border:'none',fontSize:'16px',fontWeight:'500',cursor:'pointer'}}>Find your taste type →</button>
       </div>
     </main>
   )
