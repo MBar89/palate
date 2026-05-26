@@ -146,7 +146,8 @@ async function submitReview(page, restaurantId, review) {
 
 async function run() {
   const cluster = process.argv[2] || 'adventurous'
-  const count = parseInt(process.argv[3] || '5', 10)
+  const countArg = process.argv.slice(3).find(a => /^\d+$/.test(a))
+  const count = countArg ? parseInt(countArg, 10) : 5
 
   if (!CLUSTER_DESCRIPTIONS[cluster]) {
     console.error(`Unknown cluster "${cluster}". Available: ${Object.keys(CLUSTER_DESCRIPTIONS).join(', ')}`)
@@ -166,13 +167,29 @@ async function run() {
 
   // Fetch data in parallel
   console.log('Fetching restaurants, tags, and existing reviews...')
-  const [{ data: restaurants }, { data: tags }, { data: reviewed }] = await Promise.all([
+  const [{ data: allUsers }, { data: restaurants }, { data: tags }, { data: reviewed }] = await Promise.all([
+    supabase.auth.admin.listUsers({ perPage: 1000 }),
     supabase.from('restaurants').select('id, name, cuisine, neighbourhood, price_range, is_chain').eq('status', 'approved'),
     supabase.from('tags').select('label, category').order('category'),
     supabase.from('reviews').select('restaurant_id').eq('user_id', testUser.id),
   ])
   const alreadyReviewed = new Set((reviewed || []).map(r => String(r.restaurant_id)))
-  console.log(`✓ ${restaurants.length} restaurants, ${alreadyReviewed.size} already reviewed by this user`)
+
+  // When running as the second agent, exclude restaurants the first agent has reviewed
+  // so peer data covers new restaurants that will actually show up in the first agent's feed
+  if (USE_SECOND) {
+    const firstAgent = allUsers.users
+      .filter(u => u.email?.endsWith('@palate-test.com') && u.email.includes(`agent_${cluster}_`))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0]
+    if (firstAgent) {
+      const { data: peerReviewed } = await supabase.from('reviews').select('restaurant_id').eq('user_id', firstAgent.id)
+      const peerIds = new Set((peerReviewed || []).map(r => String(r.restaurant_id)))
+      peerIds.forEach(id => alreadyReviewed.add(id))
+      console.log(`✓ ${restaurants.length} restaurants, ${reviewed?.length || 0} reviewed by this user, ${peerIds.size} reviewed by peer (excluded)`)
+    }
+  } else {
+    console.log(`✓ ${restaurants.length} restaurants, ${alreadyReviewed.size} already reviewed by this user`)
+  }
 
   // Generate review plan with Claude
   console.log(`\nAsking Claude to plan ${count} review(s) for a ${cluster} person...`)
