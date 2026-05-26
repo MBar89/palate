@@ -19,9 +19,10 @@ async function getTestUsers(supabase) {
   const { data } = await supabase.auth.admin.listUsers({ perPage: 1000 })
   const testUsers = {}
   for (const cluster of Object.keys(CLUSTER_DESCRIPTIONS)) {
+    // Use the oldest agent — it benefits from peer data written by the second agent
     const match = data.users
       .filter(u => u.email?.endsWith('@palate-test.com') && u.email.includes(`agent_${cluster}_`))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0]
     if (match) testUsers[cluster] = match
   }
   return testUsers

@@ -50,6 +50,7 @@ export default function PeoplePage() {
           .eq('cluster', cluster)
           .neq('id', user.id)
           .not('username', 'is', null)
+          .not('username', 'ilike', 'agent_%')
           .limit(10)
         if (recs) {
           const notFollowing = recs.filter(p => !followingIds.includes(p.id))
@@ -69,6 +70,7 @@ export default function PeoplePage() {
       .select('id, cluster, username, display_name')
       .neq('id', user?.id)
       .not('cluster', 'is', null)
+      .not('username', 'ilike', 'agent_%')
       .ilike('username', `%${q}%`)
       .limit(20)
     if (data) setResults(data)

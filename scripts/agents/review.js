@@ -19,11 +19,15 @@ const CLUSTER_DESCRIPTIONS = {
   casual: 'You have broad, unpretentious tastes. You eat across cuisines and settings — casual spots, neighbourhood places, the occasional nicer meal.',
 }
 
+// --second flag picks the newer (second) agent; default picks the original (oldest)
+const USE_SECOND = process.argv.includes('--second')
+
 async function getTestUser(supabase, cluster) {
   const { data } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-  const match = data.users
+  const matches = data.users
     .filter(u => u.email?.endsWith('@palate-test.com') && u.email.includes(`agent_${cluster}_`))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // oldest first
+  const match = USE_SECOND ? matches[1] : matches[0]
   if (!match) {
     throw new Error(`No test user found for cluster "${cluster}". Run the onboarding agent first:\n  node scripts/agents/onboarding.js ${cluster}`)
   }
