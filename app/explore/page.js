@@ -14,6 +14,7 @@ export default function ExplorePage() {
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [tagMap, setTagMap] = useState({})
+  const [reviewCountMap, setReviewCountMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [showFilterSheet, setShowFilterSheet] = useState(false)
   const [cuisines, setCuisines] = useState([])
@@ -69,12 +70,15 @@ export default function ExplorePage() {
         })
         const topTags = {}
         const allTags = {}
+        const totalCounts = {}
         Object.keys(map).forEach(rid => {
           topTags[rid] = Object.entries(map[rid]).sort((a,b) => b[1]-a[1]).slice(0,3).map(([t]) => t)
           allTags[rid] = [...allMap[rid]]
         })
+        reviews.forEach(rev => { totalCounts[rev.restaurant_id] = (totalCounts[rev.restaurant_id] || 0) + 1 })
         setTagMap(topTags)
         setAllTagMap(allTags)
+        setReviewCountMap(totalCounts)
         setTrendingIds(new Set(Object.entries(counts).filter(([,c]) => c >= 2).map(([id]) => id)))
       }
       const tagParam = new URLSearchParams(window.location.search).get('tag')
@@ -203,6 +207,9 @@ export default function ExplorePage() {
                   {tagMap[r.id] && tagMap[r.id].map(tag => (
                     <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
                   ))}
+                  {reviewCountMap[r.id] > 0 && (
+                    <span style={{fontSize:'11px',color:'#9A928A',marginLeft:'2px'}}>{reviewCountMap[r.id]} {reviewCountMap[r.id] === 1 ? 'review' : 'reviews'}</span>
+                  )}
                 </div>
               </div>
             ))

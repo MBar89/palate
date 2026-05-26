@@ -19,6 +19,7 @@ export default function RestaurantPage() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [existingTags, setExistingTags] = useState([])
+  const [reviewCount, setReviewCount] = useState(0)
   const [existingReviewId, setExistingReviewId] = useState(null)
   const router = useRouter()
   const params = useParams()
@@ -34,6 +35,7 @@ export default function RestaurantPage() {
 
       const { data: reviews } = await supabase.from('reviews').select('tags').eq('restaurant_id', params.id)
       if (reviews) {
+        setReviewCount(reviews.length)
         const tagCounts = {}
         reviews.forEach(rev => { if (rev.tags) rev.tags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1 }) })
         const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag)
@@ -124,7 +126,9 @@ export default function RestaurantPage() {
 
       <div style={{margin:'16px',background:'linear-gradient(135deg,#3D2B4F,#6B4E8A)',borderRadius:'16px',padding:'24px',color:'#F7F3EE'}}>
         <div style={{fontFamily:'Georgia,serif',fontSize:'26px',fontStyle:'italic',marginBottom:'4px'}}>{restaurant.name}</div>
-        <div style={{fontSize:'13px',opacity:0.7,marginBottom:matchScore?'16px':'0'}}>{restaurant.cuisine} · {restaurant.neighbourhood} · {'£'.repeat(restaurant.price_range)}</div>
+        <div style={{fontSize:'13px',opacity:0.7,marginBottom:(matchScore||reviewCount>0)?'8px':'0'}}>{restaurant.cuisine} · {restaurant.neighbourhood} · {'£'.repeat(restaurant.price_range)}</div>
+        {reviewCount > 0 && !matchScore && <div style={{fontSize:'12px',opacity:0.6,marginBottom:'0'}}>{reviewCount} {reviewCount === 1 ? 'Palate member' : 'Palate members'} reviewed this</div>}
+        {reviewCount > 0 && matchScore && <div style={{fontSize:'12px',opacity:0.6,marginBottom:'12px'}}>{reviewCount} {reviewCount === 1 ? 'Palate member' : 'Palate members'} reviewed this</div>}
         {matchScore && (
           <>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
