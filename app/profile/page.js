@@ -27,7 +27,6 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
       setUser(user)
 
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()

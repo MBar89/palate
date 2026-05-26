@@ -12,7 +12,6 @@ export default function SavedPage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
       const { data } = await supabase
         .from('saves')
         .select('restaurant_id, restaurants(*)')
