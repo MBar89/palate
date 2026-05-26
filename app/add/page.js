@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '../../lib/supabase'
 import NavBar from '../../components/NavBar'
 
@@ -24,6 +24,12 @@ export default function AddRestaurantPage() {
   const searchTimeout = useRef(null)
   const duplicateTimeout = useRef(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) window.location.href = '/login'
+    })
+  }, [])
 
   async function getToken() {
     const { data: { session } } = await supabase.auth.getSession()
