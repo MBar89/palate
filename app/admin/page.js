@@ -14,6 +14,8 @@ export default function AdminPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [approvedSearch, setApprovedSearch] = useState('')
+  const [users, setUsers] = useState([])
+  const [usersLoaded, setUsersLoaded] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -43,6 +45,15 @@ export default function AdminPage() {
       body: JSON.stringify({ action, id }),
     })
     return res.ok
+  }
+
+  async function loadUsers() {
+    if (usersLoaded) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${session.access_token}` } })
+    const { users } = await res.json()
+    setUsers(users || [])
+    setUsersLoaded(true)
   }
 
   async function approve(id) {
@@ -82,6 +93,9 @@ export default function AdminPage() {
         <button onClick={() => setActiveTab('approved')} style={{padding:'8px 20px',borderRadius:'8px 8px 0 0',border:'none',background:activeTab==='approved'?'white':'transparent',color:activeTab==='approved'?'#1A1714':'#9A928A',fontSize:'13px',fontWeight:activeTab==='approved'?'500':'400',cursor:'pointer',fontFamily:'sans-serif',borderBottom:activeTab==='approved'?'2px solid #3D2B4F':'2px solid transparent',marginBottom:'-1px'}}>
           Approved ({approved.length})
         </button>
+        <button onClick={() => { setActiveTab('users'); loadUsers() }} style={{padding:'8px 20px',borderRadius:'8px 8px 0 0',border:'none',background:activeTab==='users'?'white':'transparent',color:activeTab==='users'?'#1A1714':'#9A928A',fontSize:'13px',fontWeight:activeTab==='users'?'500':'400',cursor:'pointer',fontFamily:'sans-serif',borderBottom:activeTab==='users'?'2px solid #3D2B4F':'2px solid transparent',marginBottom:'-1px'}}>
+          Users
+        </button>
       </div>
 
       <div style={{padding:'16px'}}>
@@ -106,6 +120,43 @@ export default function AdminPage() {
             ))
           )
         ) : (
+          activeTab === 'users' ? (
+          <>
+            {!usersLoaded ? (
+              <div style={{padding:'40px',textAlign:'center',color:'#9A928A'}}>Loading...</div>
+            ) : (
+              <>
+                <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'12px'}}>{users.length} users total · {users.filter(u => u.cluster).length} calibrated · {users.filter(u => u.review_count > 0).length} with reviews</div>
+                {users.map(u => {
+                  const isTest = u.email?.endsWith('@palate-test.com')
+                  const initials = u.username ? u.username.slice(0,2).toUpperCase() : u.email?.slice(0,2).toUpperCase()
+                  const clusterLabels = { adventurous:'Adventurous', comfort:'Comfort', fine_dining:'Fine dining', casual:'Casual' }
+                  const joined = new Date(u.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+                  return (
+                    <div key={u.id} style={{background:isTest?'#FAF8F5':'white',borderRadius:'16px',padding:'14px 16px',marginBottom:'8px',boxShadow:'0 2px 12px rgba(26,23,20,0.06)',display:'flex',alignItems:'center',gap:'12px',opacity:isTest?0.7:1}}>
+                      <div style={{width:'36px',height:'36px',borderRadius:'50%',background:'#E8E0F5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',fontWeight:'600',color:'#3D2B4F',flexShrink:0}}>{initials}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'2px'}}>
+                          {u.username && <span style={{fontSize:'13px',fontWeight:'500',color:'#1A1714'}}>@{u.username}</span>}
+                          {isTest && <span style={{fontSize:'10px',background:'#EDE8E1',color:'#9A928A',borderRadius:'4px',padding:'1px 5px'}}>test</span>}
+                        </div>
+                        <div style={{fontSize:'12px',color:'#9A928A',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.email}</div>
+                      </div>
+                      <div style={{textAlign:'right',flexShrink:0}}>
+                        {u.cluster ? (
+                          <div style={{fontSize:'11px',background:'#E8E0F5',color:'#3D2B4F',borderRadius:'6px',padding:'2px 7px',marginBottom:'3px',display:'inline-block'}}>{clusterLabels[u.cluster]}</div>
+                        ) : (
+                          <div style={{fontSize:'11px',color:'#DDD6CC',marginBottom:'3px'}}>Not calibrated</div>
+                        )}
+                        <div style={{fontSize:'11px',color:'#9A928A'}}>{u.review_count} review{u.review_count !== 1 ? 's' : ''} · {joined}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </>
+          ) : (
           <>
             <input
               value={approvedSearch}
@@ -145,6 +196,7 @@ export default function AdminPage() {
             ))
             )}
           </>
+          )}
         )}
       </div>
     </main>
