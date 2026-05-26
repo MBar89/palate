@@ -72,7 +72,7 @@ export default function ExplorePage() {
         const allTags = {}
         const totalCounts = {}
         Object.keys(map).forEach(rid => {
-          topTags[rid] = Object.entries(map[rid]).sort((a,b) => b[1]-a[1]).slice(0,3).map(([t]) => t)
+          topTags[rid] = Object.entries(map[rid]).sort((a,b) => b[1]-a[1]).slice(0,3).map(([t, c]) => ({ tag: t, count: c }))
           allTags[rid] = [...allMap[rid]]
         })
         reviews.forEach(rev => { totalCounts[rev.restaurant_id] = (totalCounts[rev.restaurant_id] || 0) + 1 })
@@ -100,8 +100,8 @@ export default function ExplorePage() {
     }
     if (activeFilter === 'trending') results = results.filter(r => trendingIds.has(String(r.id)))
     if (activeFilter === 'independent') results = results.filter(r => !r.is_chain)
-    if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).includes('special occasion'))
-    if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).includes('neighbourhood gem'))
+    if (activeFilter === 'special') results = results.filter(r => (tagMap[r.id] || []).some(t => t.tag === 'special occasion'))
+    if (activeFilter === 'neighbourhood') results = results.filter(r => (tagMap[r.id] || []).some(t => t.tag === 'neighbourhood gem'))
 
     if (selectedTag) results = results.filter(r => (allTagMap[r.id] || []).includes(selectedTag))
     if (selectedCuisine) results = results.filter(r => r.cuisine === selectedCuisine)
@@ -204,8 +204,10 @@ export default function ExplorePage() {
                 <div style={{fontSize:'12px',color:'#9A928A',marginBottom:'8px'}}>{r.cuisine} · {r.neighbourhood} · {'£'.repeat(r.price_range)}</div>
                 <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'4px'}}>
                   {trendingIds.has(String(r.id)) && <span style={{display:'inline-flex',alignItems:'center',gap:'3px',fontSize:'11px',fontWeight:'500',padding:'3px 8px',borderRadius:'20px',background:'#FEF3E2',border:'1.5px solid #C47A2A',color:'#7A4A10'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C47A2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Trending</span>}
-                  {tagMap[r.id] && tagMap[r.id].map(tag => (
-                    <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                  {tagMap[r.id] && tagMap[r.id].map(({tag, count}) => (
+                    <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>
+                      {tag}{count > 1 && <span style={{fontSize:'10px',fontWeight:'600',background:'#8B6FAD',color:'white',borderRadius:'20px',padding:'1px 5px',lineHeight:'1.4'}}>{count}</span>}
+                    </span>
                   ))}
                   {reviewCountMap[r.id] > 0 && (
                     <span style={{fontSize:'11px',color:'#9A928A',marginLeft:'2px'}}>{reviewCountMap[r.id]} {reviewCountMap[r.id] === 1 ? 'review' : 'reviews'}</span>
@@ -248,8 +250,10 @@ export default function ExplorePage() {
                   <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#1A1714',marginBottom:'2px'}}>{mapPick.name}</div>
                   <div style={{fontSize:'12px',color:'#9A928A',marginBottom:tagMap[mapPick.id]?.length>0?'8px':'0'}}>{mapPick.cuisine} · {mapPick.neighbourhood} · {'£'.repeat(mapPick.price_range)}</div>
                   {tagMap[mapPick.id] && tagMap[mapPick.id].length > 0 && (
-                    <div>{tagMap[mapPick.id].map(tag => (
-                      <span key={tag} style={{display:'inline-block',fontSize:'11px',padding:'3px 8px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>{tag}</span>
+                    <div>{tagMap[mapPick.id].map(({tag, count}) => (
+                      <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:'3px',fontSize:'11px',padding:'3px 8px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'2px'}}>
+                        {tag}{count > 1 && <span style={{fontSize:'9px',fontWeight:'600',background:'#8B6FAD',color:'white',borderRadius:'20px',padding:'1px 4px',lineHeight:'1.4'}}>{count}</span>}
+                      </span>
                     ))}</div>
                   )}
                 </div>
@@ -282,8 +286,10 @@ export default function ExplorePage() {
               <div style={{fontFamily:'Georgia,serif',fontSize:'26px',fontStyle:'italic',marginBottom:'4px'}}>{inspirationPick.name}</div>
               <div style={{fontSize:'13px',opacity:0.7,marginBottom:tagMap[inspirationPick.id]?.length>0?'12px':'0'}}>{inspirationPick.cuisine} · {inspirationPick.neighbourhood} · {'£'.repeat(inspirationPick.price_range)}</div>
               {tagMap[inspirationPick.id] && tagMap[inspirationPick.id].length > 0 && (
-                <div>{tagMap[inspirationPick.id].slice(0,3).map(tag => (
-                  <span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'rgba(255,255,255,0.15)',color:'#F7F3EE',margin:'2px'}}>{tag}</span>
+                <div>{tagMap[inspirationPick.id].slice(0,3).map(({tag, count}) => (
+                  <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',padding:'4px 10px',borderRadius:'20px',background:'rgba(255,255,255,0.15)',color:'#F7F3EE',margin:'2px'}}>
+                    {tag}{count > 1 && <span style={{fontSize:'10px',fontWeight:'600',background:'rgba(255,255,255,0.25)',borderRadius:'20px',padding:'1px 5px',lineHeight:'1.4'}}>{count}</span>}
+                  </span>
                 ))}</div>
               )}
             </div>

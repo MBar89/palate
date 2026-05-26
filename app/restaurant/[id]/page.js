@@ -38,7 +38,7 @@ export default function RestaurantPage() {
         setReviewCount(reviews.length)
         const tagCounts = {}
         reviews.forEach(rev => { if (rev.tags) rev.tags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1 }) })
-        const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag)
+        const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([tag, count]) => ({ tag, count }))
         setExistingTags(sorted)
       }
 
@@ -178,7 +178,12 @@ export default function RestaurantPage() {
       {existingTags.length > 0 && (
         <div style={{padding:'0 16px 16px'}}>
           <div style={{fontSize:'11px',fontWeight:'500',color:'#9A928A',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'8px'}}>What people say</div>
-          <div>{existingTags.map(tag => (<span key={tag} style={{display:'inline-block',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'3px'}}>{tag}</span>))}</div>
+          <div>{existingTags.map(({tag, count}) => (
+            <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:'5px',fontSize:'12px',padding:'5px 11px',borderRadius:'20px',border:'1.5px solid #8B6FAD',color:'#3D2B4F',background:'#E8E0F5',margin:'3px'}}>
+              {tag}
+              {count > 1 && <span style={{fontSize:'10px',fontWeight:'600',background:'#8B6FAD',color:'white',borderRadius:'20px',padding:'1px 5px',lineHeight:'1.4'}}>{count}</span>}
+            </span>
+          ))}</div>
         </div>
       )}
 
