@@ -49,11 +49,16 @@ export default function AdminPage() {
 
   async function loadUsers() {
     if (usersLoaded) return
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${session.access_token}` } })
-    const { users } = await res.json()
-    setUsers(users || [])
-    setUsersLoaded(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${session.access_token}` } })
+      const json = await res.json()
+      setUsers(json.users || [])
+    } catch (e) {
+      console.error('loadUsers failed:', e)
+    } finally {
+      setUsersLoaded(true)
+    }
   }
 
   async function approve(id) {
